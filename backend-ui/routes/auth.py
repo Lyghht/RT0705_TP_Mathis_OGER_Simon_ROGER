@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, request, session
-from utils.utils import get_current_user, api_post
+from utils.utils import get_current_user
+from utils.utils_api import api_post
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -12,9 +13,10 @@ def login():
     if current_user:
         return redirect('/')
     
+    messages=None
+    
     #Connexion de l'utilisateur
     if request.method == 'POST':
-        messages = None
         email = request.form.get('email', '').lower()
         password = request.form.get('password', '')
         
@@ -27,6 +29,8 @@ def login():
                     session['auth_token'] = response.json().get('token')
                     #L'utilisateur est connecté on le met à l'accueil
                     return redirect('/')
+                else:
+                    messages = ['danger', 'Email ou mot de passe invalide']
             except:
                 messages = ['danger', 'Erreur lors de la connexion.']
     
@@ -42,9 +46,10 @@ def register():
     if current_user:
         return redirect('/')
     
+    messages=None
+    
     #Inscription de l'utilisateur
     if request.method == 'POST':
-        messages = None
         username = request.form.get('username', '')
         email = request.form.get('email', '').lower()
         password = request.form.get('password', '')

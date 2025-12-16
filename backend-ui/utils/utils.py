@@ -31,39 +31,6 @@ def is_real_admin():
         return False
     return user.get('role') == 'admin'
 
-def api_get(endpoint):
-    url = f"{API_BASE_URL}{endpoint}"
-    headers = {}
-    if 'auth_token' in session:
-        headers['Authorization'] = f"Bearer {session['auth_token']}"
-    return requests.get(url, headers=headers)
-
-def api_get_tmdb(endpoint):
-    url = f"https://api.themoviedb.org/3{endpoint}"
-    headers = {'Authorization': f"Bearer {os.environ.get('SECRET_TMDB')}"}
-    return requests.get(url, headers=headers)
-
-def api_post(endpoint, data=None):
-    url = f"{API_BASE_URL}{endpoint}"
-    headers = {'Content-Type': 'application/json'}
-    if 'auth_token' in session:
-        headers['Authorization'] = f"Bearer {session['auth_token']}"
-    return requests.post(url, json=data, headers=headers)
-
-def api_patch(endpoint, data=None):
-    url = f"{API_BASE_URL}{endpoint}"
-    headers = {'Content-Type': 'application/json'}
-    if 'auth_token' in session:
-        headers['Authorization'] = f"Bearer {session['auth_token']}"
-    return requests.patch(url, json=data, headers=headers)
-
-def api_delete(endpoint):
-    url = f"{API_BASE_URL}{endpoint}"
-    headers = {}
-    if 'auth_token' in session:
-        headers['Authorization'] = f"Bearer {session['auth_token']}"
-    return requests.delete(url, headers=headers)
-
 def upload_cover_image(file, url=False):
     """Upload une image de couverture et retourne l'URL ou None en cas d'erreur."""
     try:
@@ -105,7 +72,7 @@ def get_persons_post_data(request_form):
                 person_role = request_form.get(f"person_{person_num}_role")
                 person_character = request_form.get(f"person_{person_num}_character")
 
-                # On vérifie qu'on a au moins un ID et un rôle
+                # On vérifie qu'on a au moins un ID et un rôle ou un personnage
                 if person_id and (person_role or person_character):
                     persons_list.append({
                         "person_id": int(person_id),

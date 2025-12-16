@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect
-from utils.utils import api_get, get_current_user, api_post, api_patch, api_delete
+from utils.utils import get_current_user
+from utils.utils_api import api_get, api_post, api_patch, api_delete, api_search
 
 libraries_bp = Blueprint('libraries', __name__)
 
@@ -10,16 +11,10 @@ def libraries():
         page = int(request.args.get('page', 1))
     except:
         page = 1
-    library_items = []
-    pagination = {}
 
     try:
-        response = api_get(f'/search/libraries?q=&page={page}&per_page=18')
-        if response.status_code == 200:
-            data = response.json()
-            library_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-            
+        library_items, pagination = api_search('libraries', '', page, 18)
+        if library_items and pagination:
             # récupérer l'username du propriétaire
             for library in library_items:
                 try:
@@ -29,6 +24,9 @@ def libraries():
                         library['owner'] = data_response.get('username', '-')
                 except:
                     pass
+        else:
+            library_items = []
+            pagination = {}
     except:
         return render_template('libraries.html', library_items=library_items, pagination=pagination, current_page=page, messages=['danger', 'Erreur avec le serveur'])
     
@@ -161,21 +159,21 @@ def library(library_id):
             library_data = response.json()
             is_owner = current_user and (current_user.get('id') == library_data.get('owner_id') or is_admin)
             
-            # Récupérer les informations du propriétaire
+            # récupération proprio
             if library_data and library_data.get('owner_id'):
                 owner_id = library_data.get('owner_id')
                 response = api_get(f'/users/{owner_id}')
                 if response.status_code == 200:
                     library_data['owner'] = response.json().get('username', '-')
             
-            # Récupérer les médias seulement si on a accès à la bibliothèque
+            #récupération média
             response = api_get(f'/search/media?q=&library_id={library_id}&page={page}&per_page=10')
             if response.status_code == 200:
                 data = response.json()
                 media_items = data.get('data', [])
                 pagination = data.get('pagination', {})
         elif response.status_code == 403:
-            # Accès refusé - bibliothèque privée ou utilisateur n'a pas les droits
+            # Accès refusé car la vidéoothèque privée ou utilisateur n'a pas les droits
             return render_template('error.html', error_code=403, error_message="Accès refusé à cette vidéothèque"), 403
         elif response.status_code == 404:
             # Bibliothèque non trouvée
@@ -183,7 +181,7 @@ def library(library_id):
     except:
         pass
     
-    # Si library_data est None, c'est qu'on n'a pas pu récupérer la bibliothèque
+    # Si library_data est None c'est quelle existe pas
     if not library_data:
         return render_template('error.html', error_code=404, error_message="Vidéothèque non trouvée"), 404
     

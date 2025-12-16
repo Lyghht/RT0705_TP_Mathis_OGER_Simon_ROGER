@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect
-from utils.utils import api_get, get_current_user, api_post, get_url_embed_youtube, upload_cover_image, get_persons_post_data
-from utils.tmdb_api import api_tmdb_search, api_tmdb_get_media
+from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data
+from utils.utils_api import api_get, api_post, api_search
+from utils.tmdb_api import api_tmdb_search_film, api_tmdb_get_film, api_tmdb_search_series, api_tmdb_get_series
 
 add_media_bp = Blueprint('add_media', __name__)
 
@@ -21,18 +22,19 @@ def add_media():
         page = 1
 
     try:
-        if search_query and (table_type == 'externe' or table_type == 'interne'):
-            if table_type == 'externe':
-                response = api_tmdb_search(search_query, page)
+        if search_query and (table_type in ["externe_film", "externe_series", "interne"]):
+            if table_type == 'externe_film':
+                response = api_tmdb_search_film(search_query, page)
+                if response:
+                    search_results = response['data']
+                    pagination = response['pagination']
+            elif table_type == 'externe_series':
+                response = api_tmdb_search_series(search_query, page)
                 if response:
                     search_results = response['data']
                     pagination = response['pagination']
             else:
-                response = api_get(f'/search/media?q={search_query}&page={page}&per_page=20')
-                if response.status_code == 200:
-                    data = response.json()
-                    search_results = data.get('data', [])
-                    pagination = data.get('pagination', {})
+                search_results, pagination = api_search('media', search_query, page, 20)
     except:
         pass
     
@@ -59,20 +61,9 @@ def add_media_preview():
         if response.status_code == 200:
             libraries = response.json() or []
         
-        response = api_get('/search/genres?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            genres_data = response.json()
-            genres = genres_data.get('data', [])
-
-        response = api_get('/search/franchises?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            franchises_data = response.json()
-            franchises = franchises_data.get('data', [])
-
-        response = api_get('/search/persons?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            persons_data = response.json()
-            persons = persons_data.get('data', [])
+        genres, _ = api_search('genres', '', 1, 100)
+        franchises, _ = api_search('franchises', '', 1, 100)
+        persons, _ = api_search('persons', '', 1, 100)
     except:
         pass
 
@@ -84,8 +75,12 @@ def add_media_preview():
         except:
             media_id = None
 
-        if base == 'externe':
-            response = api_tmdb_get_media(media_id)
+        if base == 'externe_film':
+            response = api_tmdb_get_film(media_id)
+            if response:
+                data = response
+        elif base == 'externe_series':
+            response = api_tmdb_get_series(media_id)
             if response:
                 data = response
         elif base == 'interne':
@@ -115,20 +110,9 @@ def add_media_preview_add():
         if response.status_code == 200:
             libraries = response.json() or []
 
-        response = api_get('/search/genres?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            genres_data = response.json()
-            genres = genres_data.get('data', [])
-    
-        response = api_get('/search/franchises?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            franchises_data = response.json()
-            franchises = franchises_data.get('data', [])
-
-        response = api_get('/search/persons?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            persons_data = response.json()
-            persons = persons_data.get('data', [])
+        genres, _ = api_search('genres', '', 1, 100)
+        franchises, _ = api_search('franchises', '', 1, 100)
+        persons, _ = api_search('persons', '', 1, 100)
     except:
         pass
 

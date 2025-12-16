@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request
-from utils.utils import api_get, get_current_user
+from utils.utils import get_current_user
+from utils.utils_api import api_get, api_search
 
 pages_bp = Blueprint('pages', __name__)
 
@@ -53,17 +54,13 @@ def users():
     
     user_items = []
     pagination = {}
+    messages = None
     
-    try:
-        response = api_get(f'/search/users?q={search_query}&page={page}&per_page=20')
-        if response.status_code == 200:
-            data = response.json()
-            user_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-    except:
-        pass
+    user_items, pagination = api_search('users', search_query, page, 20)
+    if not user_items and not pagination:
+        messages = ['danger', 'Erreur lors du chargement des Users']
     
-    return render_template('users.html', user_items=user_items, pagination=pagination, search_query=search_query, current_page=pagination.get('page', page))
+    return render_template('users.html', user_items=user_items, pagination=pagination, search_query=search_query, current_page=pagination.get('page', page), messages=messages)
 
 
 #PAGE FRANCHISES
@@ -77,17 +74,13 @@ def franchises():
     
     franchise_items = []
     pagination = {}
+    messages = None
     
-    try:
-        response = api_get(f'/search/franchises?q={search_query}&page={page}&per_page=20')
-        if response.status_code == 200:
-            data = response.json()
-            franchise_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-    except:
-        pass
+    franchise_items, pagination = api_search('franchises', search_query, page, 20)
+    if not franchise_items or not pagination:
+        messages = ['danger', 'Erreur lors du chargement des franchises.']
     
-    return render_template('franchises.html', franchise_items=franchise_items, pagination=pagination, search_query=search_query, current_page=page)
+    return render_template('franchises.html', franchise_items=franchise_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
 #PAGE GENRES
 @pages_bp.route('/genres', methods=['GET'])
@@ -100,14 +93,10 @@ def genres():
     
     genre_items = []
     pagination = {}
+    messages = None
     
-    try:
-        response = api_get(f'/search/genres?q={search_query}&page={page}&per_page=30')
-        if response.status_code == 200:
-            data = response.json()
-            genre_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-    except:
-        pass
+    genre_items, pagination = api_search('genres', search_query, page, 30)
+    if not genre_items and not pagination:
+        messages = ['danger', 'Erreur lors du chargement des genres']
     
-    return render_template('genres.html', genre_items=genre_items, pagination=pagination, search_query=search_query, current_page=page)
+    return render_template('genres.html', genre_items=genre_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)

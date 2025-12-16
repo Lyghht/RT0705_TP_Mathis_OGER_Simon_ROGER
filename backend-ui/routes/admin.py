@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, request
-from utils.utils import is_admin, is_real_admin, get_current_user, api_get, api_post, api_patch, api_delete
+from utils.utils import is_admin, is_real_admin, get_current_user
+from utils.utils_api import api_get, api_post, api_patch, api_delete, api_search
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -77,15 +78,8 @@ def admin_persons():
     person_items = []
     pagination = {}
     
-    try:
-        response = api_get(f'/search/persons?q={search_query}&page={page}&per_page=10')
-        if response.status_code == 200:
-            data = response.json()
-            person_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-        else:
-            messages = ['danger', 'Erreur lors du chargement des personnes']
-    except:
+    person_item, pagination = api_search('persons', search_query, page, 10)
+    if not person_item or not pagination:
         messages = ['danger', 'Erreur lors du chargement des personnes']
     
     return render_template('admin-persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
@@ -151,15 +145,8 @@ def admin_genres():
     genre_items = []
     pagination = {}
     
-    try:
-        response = api_get(f'/search/genres?q={search_query}&page={page}&per_page=10')
-        if response.status_code == 200:
-            data = response.json()
-            genre_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-        else:
-            messages = ['danger', 'Erreur lors du chargement des genres']
-    except:
+    genre_items, pagination = api_search('genres', search_query, page, 10)
+    if not genre_items or not pagination:
         messages = ['danger', 'Erreur lors du chargement des genres']
     
     return render_template('admin-genres.html', genre_items=genre_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
@@ -226,15 +213,8 @@ def admin_franchises():
     franchise_items = []
     pagination = {}
     
-    try:
-        response = api_get(f'/search/franchises?q={search_query}&page={page}&per_page=10')
-        if response.status_code == 200:
-            data = response.json()
-            franchise_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-        else:
-            messages = ['danger', 'Erreur lors du chargement des franchises']
-    except:
+    franchise_items, pagination = api_search('franchises', search_query, page, 10)
+    if not franchise_items or not pagination:
         messages = ['danger', 'Erreur lors du chargement des franchises']
     
     return render_template('admin-franchises.html', franchise_items=franchise_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
@@ -299,15 +279,8 @@ def admin_users():
     user_items = []
     pagination = {}
     
-    try:
-        response = api_get(f'/search/users?q={search_query}&page={page}&per_page=10')
-        if response.status_code == 200:
-            data = response.json()
-            user_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-        else:
-            messages = ['danger', 'Erreur lors du chargement des utilisateurs']
-    except:
+    user_items, pagination = api_search('users', search_query, page, 10)
+    if not user_items or not pagination:
         messages = ['danger', 'Erreur lors du chargement des utilisateurs']
     
     return render_template('admin-users.html', user_items=user_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)

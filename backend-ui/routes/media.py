@@ -1,8 +1,10 @@
 from flask import Blueprint, render_template, request, redirect
-from utils.utils import api_get, get_current_user, api_patch, get_url_embed_youtube, upload_cover_image, get_persons_post_data
+from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data
+from utils.utils_api import api_get, api_patch, api_search
 
 media_bp = Blueprint('media', __name__)
 
+#PAGE MEDIA
 @media_bp.route('/', methods=['GET'])
 def media():
     search_query = request.args.get('q', '')
@@ -37,6 +39,7 @@ def media():
     
     return render_template('media.html', media_items=media_items, pagination=pagination, search_query=search_query, current_page=page, franchise_id=franchise_id, genre_id=genre_id)
 
+#PAGE MEDIA DETAILLEE
 @media_bp.route('/<int:media_id>', methods=['GET'])
 def media_details(media_id):
     current_user = get_current_user()
@@ -50,40 +53,36 @@ def media_details(media_id):
         if response.status_code == 200:
             media_data = response.json()
             
-            # Récupérer les informations de la vidéothèque
             if media_data and media_data.get('library_id'):
                 lib_id = media_data.get('library_id')
                 response = api_get(f'/libraries/{lib_id}')
                 if response.status_code == 200:
                     library_data = response.json()
             
-            # Récupérer les informations de la franchise si elle existe
             if media_data and media_data.get('franchise_id'):
                 franchise_id = media_data.get('franchise_id')
                 response = api_get(f'/franchises/{franchise_id}')
                 if response.status_code == 200:
                     franchise_data = response.json()
             
-            # Récupérer les personnes associées
             response = api_get(f'/media/{media_id}/persons')
             if response.status_code == 200:
                 persons = response.json()
+        else:
+            return redirect('/media')
 
     except Exception as e:
-        # En cas d'erreur, rediriger vers la page d'erreur ou la liste des médias
-        pass
-
-    # Vérifier si l'utilisateur est propriétaire ou admin
+        return redirect('/media')
+    
+    #On regarde qui est l'utilisateur propriétaire ou admin
     is_owner = False
     if current_user and library_data:
         is_owner = current_user.get("id") == library_data.get("owner_id") or current_user.get("role") == "admin"
 
-    if not media_data:
-        # Si le média n'existe pas ou n'est pas accessible, rediriger
-        return redirect('/media')
-
     return render_template('display-media.html', media=media_data, persons=persons, library=library_data, franchise=franchise_data,is_owner=is_owner)
 
+
+#PAGE MODIFICATION MEDIA
 @media_bp.route('/<int:media_id>/edit', methods=['GET'])
 def edit_media(media_id):
     current_user = get_current_user()
@@ -114,21 +113,17 @@ def edit_media(media_id):
         if not is_owner:
             return redirect(f'/media/{media_id}')
 
+        genres, _ = api_search('genres', '', 1, 100)
+        if not genres:
+            genres = []
+            
+        franchises, _ = api_search('franchises', '', 1, 100)
+        if not franchises:
+            franchises = []
 
-        response = api_get('/search/genres?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            genres_data = response.json()
-            genres = genres_data.get('data', [])
-            
-        response = api_get('/search/franchises?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            franchises_data = response.json()
-            franchises = franchises_data.get('data', [])
-            
-        response = api_get('/search/persons?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            persons_data = response.json()
-            all_persons = persons_data.get('data', [])
+        all_persons, _ = api_search('persons', '', 1, 100)
+        if not all_persons:
+            all_persons = []
             
         response = api_get(f'/media/{media_id}/persons')
         if response.status_code == 200:
@@ -145,6 +140,7 @@ def edit_media(media_id):
         
     return render_template('edit-media.html', media=media, genres=genres, franchises=franchises, all_persons=all_persons,current_persons=current_persons,current_genre_ids=current_genre_ids)
 
+#POST MODIFICATION MEDIA
 @media_bp.route('/<int:media_id>/edit', methods=['POST'])
 def edit_media_post(media_id):
     current_user = get_current_user()
@@ -158,20 +154,17 @@ def edit_media_post(media_id):
     current_persons = []
     
     try:
-        response = api_get('/search/genres?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            genres_data = response.json()
-            genres = genres_data.get('data', [])
-    
-        response = api_get('/search/franchises?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            franchises_data = response.json()
-            franchises = franchises_data.get('data', [])
+        genres, _ = api_search('genres', '', 1, 100)
+        if not genres:
+            genres = []
 
-        response = api_get('/search/persons?q=&page=1&per_page=100')
-        if response.status_code == 200:
-            persons_data = response.json()
-            all_persons = persons_data.get('data', [])
+        franchises, _ = api_search('franchises', '', 1, 100)
+        if not franchises:
+            franchises = []
+
+        all_persons, _ = api_search('persons', '', 1, 100)
+        if not all_persons:
+            all_persons = []
             
         response = api_get(f'/media/{media_id}/persons')
         if response.status_code == 200:
@@ -226,22 +219,24 @@ def edit_media_post(media_id):
             'franchise_order': franchise_order,
         }, genre_ids_list
 
+    #param obligatoire
     if not title or not media_type or not visibility:
         media_obj, current_genre_ids = build_media_if_error()
         return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Tous les champs obligatoires doivent être remplis'])
     
-    # Validation de l'URL YouTube
+    # validation de l'URL YouTube
     if trailer_url:
         trailer_url = get_url_embed_youtube(trailer_url)
         if not trailer_url:
             media_obj, current_genre_ids = build_media_if_error()
             return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'L\'URL de la bande-annonce doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)'])
     
+
+    #TRAITEMENT IMAGE
     file = request.files.get('cover_image') or None
     current_cover_url = request.form.get('current_cover_url') or None
     cover_image_url = None
 
-    #Traitement de l'image
     if file and file.filename:
         cover_image_url = upload_cover_image(file)
         if not cover_image_url:
@@ -283,4 +278,4 @@ def edit_media_post(media_id):
             return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Erreur lors de la modification'])
     except Exception as e:
         media_obj, current_genre_ids = build_media_if_error(cover_img_url=cover_image_url)
-        return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', f'Erreur lors de la modification: {str(e)}'])
+        return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', f'Erreur lors de la modification'])

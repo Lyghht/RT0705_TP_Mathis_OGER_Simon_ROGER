@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from utils.utils import api_get
+from utils.utils_api import api_get, api_search
 
 persons_bp = Blueprint('persons', __name__)
 
@@ -14,17 +14,13 @@ def persons():
     
     person_items = []
     pagination = {}
+    messages=None
     
-    try:
-        response = api_get(f'/search/persons?q={search_query}&page={page}&per_page=25')
-        if response.status_code == 200:
-            data = response.json()
-            person_items = data.get('data', [])
-            pagination = data.get('pagination', {})
-    except:
-        pass
+    person_items, pagination = api_search('persons', search_query, page, 25)
+    if not person_items and not pagination:
+        messages = ['danger', 'Erreur lors du chargement des personnes']
     
-    return render_template('persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page)
+    return render_template('persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
 
 #PAGE PERSONNE DETAILLEE

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, redirect, request, session
-from utils.utils import get_current_user, api_get, api_post, api_delete, api_patch
+from utils.utils import get_current_user
+from utils.utils_api import api_get, api_post, api_delete, api_patch
 
 profile_bp = Blueprint('profile', __name__)
 
