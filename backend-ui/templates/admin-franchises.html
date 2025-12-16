@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Franchises - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = 'admin' %}
+    {% include '_navbar.html' %}
+    
+    <div class="container mt-4 flex-grow-1 mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h3>Franchises</h3>
+            <a href="/admin" class="btn btn-sm btn-secondary">Retour</a>
+        </div>
+        
+        {% if messages %}
+            <div class="alert alert-{{ messages[0] }} alert-dismissible fade show" role="alert">
+                {{ messages[1] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+        
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body" id="form-container">
+                        <h5 id="form-title">Ajouter</h5>
+                        <form method="POST" action="{{ url_for('admin.admin_franchises') }}" id="form">
+                            <input type="hidden" name="id" id="id">
+                            <div class="mb-2">
+                                <label class="form-label">Nom *</label>
+                                <input type="text" class="form-control form-control-sm" name="name" id="name" required placeholder="Nom">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control form-control-sm" name="description" id="description" rows="2" placeholder="Description" maxlength="255"></textarea>
+                            </div>
+                            <button type="submit" id="submit-form" class="btn btn-primary btn-sm w-100 mb-1">Ajouter</button>
+                            <button type="button" id="cancel-form" class="btn btn-secondary btn-sm w-100" onclick="resetForm()">Annuler</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <form method="GET" action="{{ url_for('admin.admin_franchises') }}" class="mb-2">
+                            <div class="input-group">
+                                <input type="text" class="form-control form-control-sm" name="q" value="{{ search_query }}" placeholder="Rechercher...">
+                                <button class="btn btn-outline-secondary btn-sm" type="submit">Rechercher</button>
+                            </div>
+                        </form>
+                        <div>
+                            {% if franchise_items %}
+                                {% for franchise_item in franchise_items %}
+                                <div class="border-bottom py-2">
+                                    <div class="d-flex justify-content-between">
+                                        <div>{{ franchise_item.name or '-' }}</div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-outline-primary" onclick='edit({{ franchise_item.id }}, {{ (franchise_item.name or '') | tojson }}, {{ (franchise_item.description or '') | tojson }})'>Modifier</button>
+                                            <form method="POST" action="{{ url_for('admin.admin_franchises') }}" id="form-delete">
+                                                <input type="hidden" name="delete" value="{{ franchise_item.id }}">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Voulez vous vraiment supprimer cette franchise ?')">Supprimer</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <p>Aucune franchise trouvée</p>
+                            {% endif %}
+                        </div>
+                        {% if pagination and pagination.pages > 1 %}
+                        <nav>
+                            <ul class="pagination pagination-sm">
+                                {% if current_page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.admin_franchises', q=search_query, page=current_page - 1) }}">Précédent</a>
+                                </li>
+                                {% endif %}
+                                {% for page_number in range(1, pagination.pages + 1) %}
+                                <li class="page-item {% if page_number == current_page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('admin.admin_franchises', q=search_query, page=page_number) }}">{{ page_number }}</a>
+                                </li>
+                                {% endfor %}
+                                {% if current_page < pagination.pages %}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{ url_for('admin.admin_franchises', q=search_query, page=current_page + 1) }}">Suivant</a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function edit(franchise_id, franchise_name, franchise_description) {
+            document.getElementById('form-title').textContent = 'Modifier : l\'ID ' + franchise_id;
+            document.getElementById('submit-form').textContent = 'Modifier';
+            document.getElementById('id').value = franchise_id;
+            document.getElementById('name').value = franchise_name;
+            document.getElementById('description').value = franchise_description || '';
+            document.getElementById('name').placeholder = franchise_name;
+            document.getElementById('description').placeholder = franchise_description || '';
+            document.getElementById('form-container').style.border = '1px solid red';
+        }
+        function resetForm() {
+            document.getElementById('form-title').textContent = 'Ajouter';
+            document.getElementById('submit-form').textContent = 'Ajouter';
+            document.getElementById('name').placeholder = 'Nom';
+            document.getElementById('description').placeholder = 'Description';
+            document.getElementById('form').reset();
+            document.getElementById('id').value = '';
+            document.getElementById('form-container').style.border = 'none';
+        }
+    </script>
+    {% include '_footer.html' %}
+</body>
+</html>

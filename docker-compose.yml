@@ -1,51 +1,54 @@
 services:
+  #Le conteneur NGINX celui de tête exposé en 80
   nginx:
     image: nginx:alpine
     container_name: nginx
-    restart: always
     ports:
       - "80:80"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - static_volume:/usr/share/nginx/html/static
-    networks:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./backend-ui/static:/usr/share/nginx/html/static
+    networks: #Il peut lire uniquement l'api et l'ui il n'a pas la vue sur la DB
       - net_app
+      - app_api
     depends_on:
       - backend-ui
       - backend-api
 
+  #Le conteneur pour le front
   backend-ui:
     build: ./backend-ui
     container_name: app_ui
-    restart: unless-stopped
+    env_file:
+      - .env
     volumes:
       - ./backend-ui:/app
-      - static_volume:/app/static
-    networks:
+      - ./backend-ui/static:/app/static
+    networks: #Il peut parler que avec le nginx
       - net_app
-      - app_api
     depends_on:
       backend-api: 
         condition: service_started
 
-
+  #Le conteneur pour l'api
   backend-api:
     build: ./api
     container_name: api
-    restart: unless-stopped
     volumes:
       - ./api:/app
-    networks:
+    env_file:
+      - .env
+    networks: #Il peut allé sur la db et sur le nginx
       - app_api
       - api_db
     depends_on:
       postgres_db:
         condition: service_healthy
 
+  #Le conteneur pour la db
   postgres_db:
     image: postgres:15-alpine
     container_name: database
-    restart: always
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -53,19 +56,20 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./data:/docker-entrypoint-initdb.d
-    networks:
+    networks: #Il peut allé que sur l'api
       - api_db
-    healthcheck:
+    healthcheck: #On regarde que tout est ok
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 5
 
+#Def des réseaux
 networks:
   net_app:
   app_api:
   api_db:     
 
+#Def des volumes
 volumes:
   postgres_data:
-  static_volume: 

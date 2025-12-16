@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Franchises - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = 'franchises' %}
+    {% include '_navbar.html' %}
+    
+    <div class="container mt-4 flex-grow-1 mb-5">
+        <div class="page-header">
+            <h4>Franchises</h4>
+        </div>
+        
+        <form method="GET" action="/franchises" class="search-bar">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Rechercher une franchise...">
+                <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+            </div>
+        </form>
+        
+        {% if franchise_items %}
+            <div class="compact-grid">
+                {% for franchise_item in franchise_items %}
+                <a href="/media?franchise_id={{ franchise_item.id }}" class="compact-card">
+                    <div class="compact-card-title">{{ franchise_item.name or '-' }}</div>
+                    {% if franchise_item.description %}
+                    <div class="compact-card-subtitle">{{ franchise_item.description[:50] }}{% if franchise_item.description|length > 50 %}...{% endif %}</div>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>Aucune franchise trouvée</p>
+            </div>
+        {% endif %}
+        
+        {% if pagination and pagination.pages > 1 %}
+        <div class="pagination-container">
+            <nav>
+                <ul class="pagination pagination-sm">
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="/franchises?q={{ search_query }}&page={{ current_page - 1 }}">Précédent</a>
+                    </li>
+                    {% endif %}
+                    {% for page_number in range(1, pagination.pages + 1) %}
+                    <li class="page-item {% if page_number == current_page %}active{% endif %}">
+                        <a class="page-link" href="/franchises?q={{ search_query }}&page={{ page_number }}">{{ page_number }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if current_page < pagination.pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="/franchises?q={{ search_query }}&page={{ current_page + 1 }}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% include '_footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

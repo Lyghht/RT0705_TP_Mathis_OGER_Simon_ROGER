@@ -1,39 +1,38 @@
-import requests
+import os
 from flask import Flask, render_template
+from utils.utils import get_current_user
+from routes.auth import auth_bp
+from routes.pages import pages_bp
+from routes.admin import admin_bp
+from routes.profile import profile_bp
+from routes.media import media_bp
+from routes.persons import persons_bp
+from routes.add_media import add_media_bp
+from routes.libraries import libraries_bp
 
 app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY_UI')
 
-@app.route('/')
-def home():
-    api_message = "Pas de réponse"
-    status_color = "danger"
+app.register_blueprint(add_media_bp, url_prefix='/add-media')
+app.register_blueprint(admin_bp, url_prefix='/admin')
+app.register_blueprint(auth_bp)
+app.register_blueprint(libraries_bp)
+app.register_blueprint(media_bp, url_prefix='/media')
+app.register_blueprint(pages_bp)
+app.register_blueprint(persons_bp, url_prefix='/persons')
+app.register_blueprint(profile_bp, url_prefix='/profile')
 
-    try:
-        response = requests.get('http://api:5000/hello', timeout=5)
-        
-        if response.status_code == 200:
-            data = response.json()
-            api_message = data.get('message', 'Erreur format')
-            status_color = "success"
-        else:
-            api_message = f"Erreur API: {response.status_code}"
+@app.context_processor
+def inject_user():
+    return {'current_user': get_current_user()}
 
-    except requests.exceptions.ConnectionError:
-        api_message = "Impossible de contacter l'API (Est-elle lancée ?)"
-    except Exception as e:
-        api_message = f"Erreur grave : {str(e)}"
+@app.errorhandler(404)
+def page_not_found(error):
+    return render_template('error.html', error_code=404, error_message="Page non trouvée"), 404
 
-    context = {
-        "titre": "Flask & Jinja",
-        "message": api_message,
-        "couleur_bouton": status_color,
-        "items": [
-            "Élément 1 généré par boucle Jinja",
-            "Élément 2 généré par boucle Jinja",
-            "Élément 3 généré par boucle Jinja"
-        ]
-    }
-    return render_template('index.html', **context)
+@app.errorhandler(500)
+def internal_server_error(error):
+    return render_template('error.html', error_code=500, error_message="Erreur interne du serveur"), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=80)

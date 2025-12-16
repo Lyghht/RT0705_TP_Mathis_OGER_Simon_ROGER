@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Médias - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = 'media' %}
+    {% include '_navbar.html' %}
+    
+    <div class="container mt-4 flex-grow-1 mb-5">
+        <div class="page-header">
+            <h4>Médias</h4>
+            {% if current_user %}
+                <a href="/add-media" class="btn btn-sm btn-primary">+ Ajouter</a>
+            {% endif %}
+        </div>
+        
+        <form method="GET" action="/media" class="search-bar">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" value="{{ search_query }}" placeholder="Rechercher un média...">
+                <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+            </div>
+        </form>
+        
+        {% if media_items %}
+            <div class="items-grid">
+                {% for media_item in media_items %}
+                <a href="/media/{{ media_item.id }}" class="media-card">
+                    <img src="{{ media_item.cover_image_url or '/static/no-image.jpg' }}" 
+                         alt="{{ media_item.title or 'Média' }}" 
+                         class="media-card-image"
+                         onerror="this.src='/static/no-image.jpg'">
+                    <div class="media-card-body">
+                        <h5 class="media-card-title">{{ media_item.title or '-' }}</h5>
+                        <p class="media-card-meta">
+                            {{ media_item.type or '-' }}
+                            {% if media_item.release_year %}- {{ media_item.release_year }}{% endif %}
+                        </p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>Aucun média trouvé</p>
+            </div>
+        {% endif %}
+        
+        {% if pagination and pagination.pages > 1 %}
+        <div class="pagination-container">
+            <nav>
+                <ul class="pagination pagination-sm">
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="/media?q={{ search_query }}&page={{ current_page - 1 }}{% if franchise_id %}&franchise_id={{ franchise_id }}{% endif %}{% if genre_id %}&genre_id={{ genre_id }}{% endif %}">Précédent</a>
+                    </li>
+                    {% endif %}
+                    {% for page_number in range(1, pagination.pages + 1) %}
+                    <li class="page-item {% if page_number == current_page %}active{% endif %}">
+                        <a class="page-link" href="/media?q={{ search_query }}&page={{ page_number }}{% if franchise_id %}&franchise_id={{ franchise_id }}{% endif %}{% if genre_id %}&genre_id={{ genre_id }}{% endif %}">{{ page_number }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if current_page < pagination.pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="/media?q={{ search_query }}&page={{ current_page + 1 }}{% if franchise_id %}&franchise_id={{ franchise_id }}{% endif %}{% if genre_id %}&genre_id={{ genre_id }}{% endif %}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% include '_footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter un média - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = 'add-media' %}
+    {% include '_navbar.html' %}
+    
+    <div class="container mt-4 flex-grow-1 mb-5">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>Ajouter un média</h3>
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">Annuler</a>
+                </div>
+
+                {% if messages %}
+                <div class="alert alert-danger alert-dismissible fade show"
+                    role="alert">
+                    {{ messages[1] }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('add_media.add_media_preview_add') }}" enctype="multipart/form-data">
+
+                    <div class="card mb-4">
+                        <div class="card-header">Informations générales</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Titre *</label>
+                                <input type="text" class="form-control" id="title" name="title" value="{{ data.title if data and data.title else '' }}" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="type" class="form-label">Type *</label>
+                                    <select class="form-select" id="type" name="type" required>
+                                        <option value="">-</option>
+                                        <option value="film" {% if data and data.media_type == 'film' %}selected{% endif %}>Film</option>
+                                        <option value="serie" {% if data and data.media_type == 'serie' %}selected{% endif %}>Série</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="library" class="form-label">Vidéothèque *</label>
+                                    <select class="form-select" id="library" name="library" required>
+                                        <option value="">-</option>
+                                        {% for library in libraries %}
+                                        <option value="{{ library.id }}" data-visibility="{{ library.visibility }}">{{ library.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="visibility" class="form-label">Visibilité *</label>
+                                    <select class="form-select" id="visibility" name="visibility" required>
+                                        <option value="">-</option>
+                                        <option value="public">Public</option>
+                                        <option value="private">Privé</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="year" class="form-label">Année de sortie</label>
+                                    <input type="number" class="form-control" id="year" name="year" value="{{ data.release_year if data and data.release_year else '' }}" min="1900" max="2100">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="duration" class="form-label">Durée (minutes)</label>
+                                    <input type="number" class="form-control" id="duration" name="duration" value="{{ data.duration if data and data.duration else '' }}" min="1">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Genres</label>
+                                <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                    {% for genre in genres %}
+                                        {% set genre_selected = False %}
+                                        {% if genre.id in data.genres and data.genres|length > 0 %}
+                                            {% set genre_selected = True %}
+                                        {% endif %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="genres" value="{{ genre.id }}" id="genre_{{ genre.id }}" {% if genre_selected %}checked{% endif %}>
+                                            <label class="form-check-label" for="genre_{{ genre.id }}">
+                                                {{ genre.name }}
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="synopsis" class="form-label">Synopsis</label>
+                                <textarea class="form-control" id="synopsis" name="synopsis" rows="5">{{ data.synopsis if data and data.synopsis else '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">Images et Vidéos</div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Prévisualisation de l'image</label>
+                                    <div class="mb-2">
+                                        <div id="cover_preview" style="display:{% if data and data.cover_image_url %}block{% else %}none{% endif %};">
+                                            {% if data and data.cover_image_url %}
+                                                <img id="cover_preview_img" src="{{ data.cover_image_url }}" alt="Cover" class="cover-preview">
+                                            {% else %}
+                                                <div class="text-muted p-3 border rounded text-center">Aucune image</div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <input type="hidden" name="current_cover_url" id="current_cover_url" value="{{ data.cover_image_url if data and data.cover_image_url else '' }}">
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="cover_image" class="form-label">Mettre une image de couverture</label>
+                                    <input type="file" class="form-control mb-3" id="cover_image" name="cover_image" accept=".png, .jpg, .jpeg, .webp">
+                                    <small class="form-text text-muted">Image de couverture (.PNG, .JPG, .JPEG, .WEBP)</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="trailer_url" class="form-label">URL de la bande-annonce</label>
+                                <input type="url" class="form-control" id="trailer_url" name="trailer_url" value="{{ data.trailer_url if data and data.trailer_url else '' }}" placeholder="https://youtube.com/..." pattern="^https://(www\.)?youtube\.com/.*">
+                                <small class="form-text text-muted">L'URL doit être un lien YouTube (https://youtube.com/ ou https://www.youtube.com/)</small>
+                                <div class="invalid-feedback" id="trailer_url_feedback" style="display:none;">
+                                    L'URL doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">Franchise</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="franchise" class="form-label">Franchise</label>
+                                    <select class="form-select" id="franchise" name="franchise">
+                                        <option value="">Aucune</option>
+                                        {% for franchise in franchises %}
+                                            <option value="{{ franchise.id }}" {% if data and data.franchise_id == franchise.id %}selected{% endif %}>{{ franchise.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="franchise_order" class="form-label">Ordre dans la franchise <span id="franchise_order_required" style="display:none;">*</span></label>
+                                    <input type="number" class="form-control" id="franchise_order" name="franchise_order" value="{{ data.franchise_order if data and data.franchise_order else '' }}" min="1" disabled>
+                                    <small class="form-text text-muted" id="franchise_order_help" style="display:none;">Requis si une franchise est sélectionnée</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Personnes</span>
+                            <button type="button" onclick="addPersonRow()" class="btn btn-sm btn-outline-primary">+ Ajouter une personne</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="persons_container">
+                                {% if data and data.persons %}
+                                    {% set persons_count = data.persons|length if data.persons else 1 %}
+                                {% else %}
+                                    {% set persons_count = 1 %}
+                                {% endif %}
+                                {% for i in range(1, persons_count + 1) %}
+                                    {% set person_data = None %}
+                                    {% if data and data.persons %}
+                                        {% if i - 1 < data.persons|length %}
+                                            {% set person_data = data.persons[i - 1] %}
+                                        {% endif %}
+                                    {% endif %}
+                                    <div class="person-entry mb-2">
+                                        <div class="row">
+                                            <div class="col-md-5 mb-2">
+                                                <label class="form-label small">Personne</label>
+                                                <select class="form-select person-select" name="person_{{ i }}">
+                                                    <option value="">Choisir...</option>
+                                                    {% for person in persons %}
+                                                    <option value="{{ person.id }}" {% if person_data and person_data.person_id == person.id %}selected{% endif %}>{{ person.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label small">Rôle</label>
+                                                <input type="text" class="form-control person-role" name="person_{{ i }}_role" value="{% if person_data and person_data.role %}{{ person_data.role }}{% endif %}" placeholder="Rôle (ex: Acteur)">
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label small">Personnage (facultatif)</label>
+                                                <input type="text" class="form-control person-character" name="person_{{ i }}_character" value="{% if person_data and person_data.character_name %}{{ person_data.character_name }}{% endif %}" placeholder="Nom du personnage">
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end mb-2">
+                                                <button type="button" class="btn btn-danger btn-sm remove-person" onclick="removePersonRow(this)">X</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">Ajouter le média</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Si on change l'image alors on efface l'url par défaut
+        const coverImageInput = document.getElementById('cover_image');
+        const currentCoverUrl = document.getElementById('current_cover_url');
+        
+        // génére l'aperçu 
+        coverImageInput.addEventListener('change', function(event) {
+            currentCoverUrl.value = '';
+            const previewDiv = document.getElementById('cover_preview');
+            let previewImg = document.getElementById('cover_preview_img');
+
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    
+                    if (!previewImg) {
+                        previewDiv.innerHTML = '<img id="cover_preview_img" src="" alt="Cover" class="cover-preview">';
+                        //On récupére l'image
+                        previewImg = document.getElementById('cover_preview_img');
+                    }
+                    
+                    previewImg.src = e.target.result;
+                    previewDiv.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                // si pas de fichier on efface l'aperçu
+                previewImg.src = '';
+                previewDiv.innerHTML = '';
+                previewDiv.style.display = 'none';
+            }
+        });
+
+        //validation de l'url youtube
+        function isValidYouTubeUrl(url) {
+            if (!url || url.trim() === '') {
+                return true;
+            }
+            const youtubePattern = /^https:\/\/(www\.)?youtube\.com\/.*/i;
+            return youtubePattern.test(url);
+        }
+        
+        const trailerUrlInput = document.getElementById('trailer_url');
+        const trailerUrlFeedback = document.getElementById('trailer_url_feedback');
+        
+        trailerUrlInput.addEventListener('blur', function() {
+            const isValid = !this.value.trim() || isValidYouTubeUrl(this.value.trim());
+            trailerUrlFeedback.style.display = isValid ? 'none' : 'block';
+            this.classList.toggle('is-invalid', !isValid);
+        });
+        
+        // Mise à jour automatique de la visibilité selon la vidéothèque sélectionnée
+        const librarySelect = document.getElementById('library');
+        const visibilitySelect = document.getElementById('visibility');
+        
+        function updateVisibilityFromLibrary() {
+            //On prend l'attribut visibility du bon index dans le select de la vidéothèque pour le mettre automatiquement dans le bon champs
+            const selectedOption = librarySelect.options[librarySelect.selectedIndex];
+            const libraryVisibility = selectedOption.getAttribute('data-visibility');
+            
+            if (libraryVisibility && (libraryVisibility === 'public' || libraryVisibility === 'private')) {
+                visibilitySelect.value = libraryVisibility;
+            }
+        }
+        
+        librarySelect.addEventListener('change', updateVisibilityFromLibrary);
+        
+        // gestion de l'ordre dans la franchise
+        const franchiseSelect = document.getElementById('franchise');
+        const franchiseOrderInput = document.getElementById('franchise_order');
+        const franchiseOrderRequired = document.getElementById('franchise_order_required');
+        const franchiseOrderHelp = document.getElementById('franchise_order_help');
+        
+        function updateFranchiseOrderState() {
+            // Si aucune franchise
+            if (franchiseSelect.value === '' || franchiseSelect.value === null) {
+                franchiseOrderInput.disabled = true;
+                franchiseOrderInput.required = false;
+                franchiseOrderInput.value = '';
+                franchiseOrderRequired.style.display = 'none';
+                franchiseOrderHelp.style.display = 'none';
+            // si franchise sélectionné
+            } else {
+                franchiseOrderInput.disabled = false;
+                franchiseOrderInput.required = true;
+                franchiseOrderRequired.style.display = 'inline';
+                franchiseOrderHelp.style.display = 'block';
+            }
+        }
+        
+        franchiseSelect.addEventListener('change', updateFranchiseOrderState);
+        updateFranchiseOrderState(); // on met à jour direct quand la page charge
+        
+        // Gestion des personnes (ajout/suppression dynamique)
+        {% set persons_count = 1 %}
+        {% if data and data.persons and data.persons|length > 0 %}
+            {% set persons_count = data.persons|length %}
+        {% endif %}
+        const personsData = {{ persons | tojson }};
+        let personCounter = {{ persons_count }};
+        
+        function addPersonRow() {
+            personCounter++;
+            const container = document.getElementById('persons_container');
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'person-entry mb-2';
+            
+            let optionsHtml = '<option value="">Choisir...</option>';
+            personsData.forEach(function(person) {
+                optionsHtml += '<option value="' + person.id + '">' + person.name + '</option>';
+            });
+            
+            newRow.innerHTML = `
+                <div class="row">
+                    <div class="col-md-5 mb-2">
+                        <label class="form-label small">Personne</label>
+                        <select class="form-select person-select" name="person_${personCounter}">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small">Rôle</label>
+                        <input type="text" class="form-control person-role" name="person_${personCounter}_role" placeholder="Rôle (ex: Acteur)">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small">Personnage (opt)</label>
+                        <input type="text" class="form-control person-character" name="person_${personCounter}_character" placeholder="Nom du personnage">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end mb-2">
+                        <button type="button" class="btn btn-danger btn-sm remove-person" onclick="removePersonRow(this)">X</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        function removePersonRow(button) {
+            button.closest('.person-entry').remove();
+        }
+    </script>
+    {% include '_footer.html' %}
+</body>
+</html>

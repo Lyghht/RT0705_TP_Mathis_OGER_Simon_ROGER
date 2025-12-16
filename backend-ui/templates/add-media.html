@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Ajouter un média - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = 'add-media' %}
+    {% include '_navbar.html' %}
+    
+    <div class="container mt-4 flex-grow-1 mb-5">
+        <h4 class="mb-3">Ajouter un média</h4>
+        
+        <div class="mb-4">
+            <a href="/add-media/preview" class="btn btn-outline-primary btn-sm me-2">Ajouter à partir de rien</a>
+            <button type="button" class="btn {% if table_type == 'externe' or not table_type %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm me-2" id="btn-external">Ajouter à partir d'une base externe</button>
+            <button type="button" class="btn {% if table_type == 'interne' %}btn-primary{% else %}btn-outline-primary{% endif %} btn-sm" id="btn-internal">Ajouter à partir de la base interne</button>
+        </div>
+        
+        <form method="GET" action="{{ url_for('add_media.add_media') }}" class="mb-3" id="search-form">
+            <div class="input-group">
+                <input type="text" class="form-control" name="q" id="search-input" value="{{ search_query or '' }}" placeholder="Rechercher...">
+                <input type="hidden" name="table" id="table-type" value="{{ table_type or 'externe'}}">
+                <button class="btn btn-outline-secondary" type="submit">Rechercher</button>
+            </div>
+        </form>
+        
+        {% if messages %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ messages[1] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+        
+        <div id="search-results">
+            {% if search_query and table_type %}
+                {% if search_results %}
+                    {% for result in search_results %}
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <form method="POST" action="{{ url_for('add_media.add_media_preview') }}">
+                                <div class="row">
+                                    {% if result.cover_image_url %}
+                                    <div class="col-auto">
+                                        <img src="{{ result.cover_image_url }}" alt="{{ result.title }}" style="max-width: 100px; max-height: 150px; object-fit: cover; border-radius: 4px;">
+                                    </div>
+                                    {% else %}
+                                    <div class="col-auto">
+                                        <img src="/static/no-image.jpg" alt="{{ result.title }}" style="max-width: 100px; max-height: 150px; object-fit: cover; border-radius: 4px;">
+                                    </div>
+                                    {% endif %}
+                                    <div class="col">
+                                        <h5>{{ result.title or '-' }}</h5>
+                                        <p class="text-muted small mb-1">{{ result.type or '-' }} - {{ result.release_year or '-' }}</p>
+                                        {% if result.synopsis %}
+                                        <p class="small mb-2">{{ result.synopsis[:200] }}{% if result.synopsis|length > 200 %}...{% endif %}</p>
+                                        {% endif %}
+                                        <button type="submit" class="btn btn-primary btn-sm">Ajouter ce média</button>
+                                    </div>
+                                </div>
+                                <!-- Champs cachés pour envoyer les données -->
+                                <input type="hidden" name="base" value="{{ table_type or 'externe' }}">
+                                <input type="hidden" name="media_id" value="{{ result.id or '' }}">
+                            </form>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p>Aucun résultat trouvé</p>
+                {% endif %}
+            {% endif %}
+        </div>
+        
+        {% if pagination and pagination.pages and pagination.pages > 1 %}
+        <nav class="d-flex justify-content-center mt-4" id="pagination">
+            <ul class="pagination pagination-sm">
+                {% set current_page = pagination.page %}
+                {% set total_pages = pagination.pages %}
+                
+                <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                    {% if current_page > 1 %}
+                    <a class="page-link" href="{{ url_for('add_media.add_media', q=search_query, table=table_type, page=current_page - 1) }}">Précédent</a>
+                    {% else %}
+                    <span class="page-link">Précédent</span>
+                    {% endif %}
+                </li>
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ current_page }} / {{ total_pages }}</span>
+                </li>
+                
+                <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                    {% if current_page < total_pages %}
+                    <a class="page-link" href="{{ url_for('add_media.add_media', q=search_query, table=table_type, page=current_page + 1) }}">Suivant</a>
+                    {% else %}
+                    <span class="page-link">Suivant</span>
+                    {% endif %}
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        {% if not table_type %}
+        document.getElementById('table-type').value = 'externe';
+        {% endif %}
+        
+        document.getElementById('btn-external').addEventListener('click', function() {
+            window.location.href = '/add-media?q={{ search_query }}&table=externe';
+            document.getElementById('search-form').style.display = 'block';
+
+            document.getElementById('btn-external').classList.add('btn-primary');
+            document.getElementById('btn-external').classList.remove('btn-outline-primary');
+            document.getElementById('btn-internal').classList.remove('btn-primary');
+            document.getElementById('btn-internal').classList.add('btn-outline-primary');
+
+            document.getElementById('search-results').innerHTML = '';
+            document.getElementById('search-input').value = '';
+            document.getElementById('pagination').innerHTML = '';
+
+            document.getElementById('table-type').value = 'externe';
+            document.getElementById('search-input').focus();
+        });
+        
+        document.getElementById('btn-internal').addEventListener('click', function() {
+
+            window.location.href = '/add-media?q={{ search_query }}&table=interne';
+            document.getElementById('search-form').style.display = 'block';
+
+
+            document.getElementById('btn-external').classList.remove('btn-primary');
+            document.getElementById('btn-external').classList.add('btn-outline-primary');
+            document.getElementById('btn-internal').classList.add('btn-primary');
+            document.getElementById('btn-internal').classList.remove('btn-outline-primary');
+
+            document.getElementById('search-results').innerHTML = '';
+            document.getElementById('search-input').value = '';
+            document.getElementById('pagination').innerHTML = '';
+
+            document.getElementById('table-type').value = 'interne';
+            document.getElementById('search-input').focus();
+        });
+    </script>
+    {% include '_footer.html' %}
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Modifier {{ media.title }} - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = '' %}
+    {% include '_navbar.html' %}
+
+    <div class="container mt-4 flex-grow-1 mb-5">
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3>Modifier le média</h3>
+                    <a href="/media/{{ media.id }}" class="btn btn-outline-secondary">Annuler</a>
+                </div>
+
+                {% if messages %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    {{ messages[1] }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endif %}
+
+                <form method="POST" action="/media/{{ media.id }}/edit" enctype="multipart/form-data">
+
+                    <div class="card mb-4">
+                        <div class="card-header">Informations générales</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="title" class="form-label">Titre *</label>
+                                <input type="text" class="form-control" id="title" name="title"
+                                    value="{{ media.title }}" required>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="type" class="form-label">Type *</label>
+                                    <select class="form-select" id="type" name="type" required>
+                                        <option value="film" {% if media.type=='film' %}selected{% endif %}>
+                                            Film
+                                        </option>
+                                        <option value="série" {% if media.type=='série' %}selected{% endif %}>
+                                            Série
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="visibility" class="form-label">Visibilité *</label>
+                                    <select class="form-select" id="visibility" name="visibility" required>
+                                        <option value="public" {% if media.visibility=='public' %}selected{% endif %}>
+                                            Public
+                                        </option>
+                                        <option value="private" {% if media.visibility=='private' %}selected{% endif %}>
+                                            Privé
+                                        </option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="year" class="form-label">Année de sortie</label>
+                                    <input type="number" class="form-control" id="year" name="year"
+                                        value="{{ media.release_year or '' }}"
+                                    >
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="duration" class="form-label">Durée (minutes)</label>
+                                    <input type="number" class="form-control" id="duration" name="duration"
+                                        value="{{ media.duration or '' }}"
+                                    >
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Genres</label>
+                                <div class="border rounded p-2" style="max-height: 200px; overflow-y: auto;">
+                                    {% for genre in genres %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="genres" value="{{ genre.id }}" id="genre_{{ genre.id }}" 
+                                            {% if genre.id in current_genre_ids %}
+                                                checked
+                                            {% endif %}
+                                        >
+                                        <label class="form-check-label" for="genre_{{ genre.id }}">
+                                            {{ genre.name }}
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="synopsis" class="form-label">Synopsis</label>
+                                <textarea class="form-control" id="synopsis" name="synopsis"
+                                    rows="5">{{ media.synopsis or '' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">Images et Vidéos</div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Image actuelle</label>
+                                    <div class="mb-2">
+                                        {% if media.cover_image_url %}
+                                        <img src="{{ media.cover_image_url }}" alt="Cover" class="cover-preview">
+                                        {% else %}
+                                        <div class="text-muted p-3 border rounded text-center">Aucune image</div>
+                                        {% endif %}
+                                    </div>
+                                    <input type="hidden" name="current_cover_url" value="{{ media.cover_image_url or '' }}">
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="cover_image" class="form-label">Changer l'image (upload)</label>
+                                    <input type="file" class="form-control mb-3" id="cover_image" name="cover_image" accept=".png, .jpg, .jpeg, .webp">
+                                    <small class="form-text text-muted">Image de couverture (.PNG, .JPG, .JPEG, .WEBP)</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="trailer_url" class="form-label">URL de la bande-annonce</label>
+                                <input type="url" class="form-control" id="trailer_url" name="trailer_url" value="{{ media.trailer_url or '' }}" placeholder="https://youtube.com/..." pattern="^https://(www\.)?youtube\.com/.*">
+                                <small class="form-text text-muted">L'URL doit être un lien YouTube (https://youtube.com/ ou https://www.youtube.com/)</small>
+                                <div class="invalid-feedback" id="trailer_url_feedback" style="display:none;">
+                                    L'URL doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header">Franchise</div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="franchise" class="form-label">Franchise</label>
+                                    <select class="form-select" id="franchise" name="franchise">
+                                        <option value="">Aucune</option>
+                                        {% for franchise in franchises %}
+                                        <option value="{{ franchise.id }}" {% if media.franchise_id==franchise.id
+                                            %}selected{% endif %}>{{ franchise.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="franchise_order" class="form-label">Ordre dans la franchise</label>
+                                    <input type="number" class="form-control" id="franchise_order"
+                                        name="franchise_order" value="{{ media.franchise_order or '' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <span>Personnes</span>
+                            <button type="button" onclick="addPersonRow()"
+                                class="btn btn-sm btn-outline-primary">+ Ajouter une personne</button>
+                        </div>
+                        <div class="card-body">
+                            <div id="persons_container">
+                                {% set persons_count = current_persons|length if current_persons else 1 %}
+                                {% for i in range(1, persons_count + 1) %}
+                                    {% set person_data = None %}
+                                    {% if current_persons and i <= current_persons|length %}
+                                        {% set person_data = current_persons[i - 1] %}
+                                    {% endif %}
+                                    <div class="person-entry mb-2">
+                                        <div class="row">
+                                            <div class="col-md-5 mb-2">
+                                                <label class="form-label small">Personne</label>
+                                                <select class="form-select person-select" name="person_{{ i }}" {% if person_data and person_data.person_id %}required{% endif %}>
+                                                    <option value="">Choisir...</option>
+                                                    {% for p in all_persons %}
+                                                        <option value="{{ p.id }}" {% if person_data and person_data.person_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label small">Rôle</label>
+                                                <input type="text" class="form-control person-role" name="person_{{ i }}_role" value="{% if person_data and person_data.role %}{{ person_data.role }}{% endif %}">
+                                            </div>
+                                            <div class="col-md-3 mb-2">
+                                                <label class="form-label small">Personnage</label>
+                                                <input type="text" class="form-control person-character" name="person_{{ i }}_character"value="{% if person_data and person_data.character_name %}{{ person_data.character_name }}{% endif %}">
+                                            </div>
+                                            <div class="col-md-1 d-flex align-items-end mb-2">
+                                                <button type="button" class="btn btn-danger btn-sm remove-person" onclick="removePersonRow(this)">X</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" name="action" value="save" class="btn btn-primary btn-lg">Enregistrer les modifications</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // efface l'url si on change l'image
+        const coverImageInput = document.getElementById('cover_image');
+        const currentCoverUrl = document.getElementById('current_cover_url');
+        coverImageInput.addEventListener('change', function() {
+            currentCoverUrl.value = '';
+        });
+
+        // vérif url
+        function isValidYouTubeUrl(url) {
+            if (!url || url.trim() === '') {
+                return true;
+            }
+            const youtubePattern = /^https:\/\/(www\.)?youtube\.com\/.*/i;
+            return youtubePattern.test(url);
+        }
+        
+        // vérif url
+        const trailerUrlInput = document.getElementById('trailer_url');
+        const trailerUrlFeedback = document.getElementById('trailer_url_feedback');
+        
+        trailerUrlInput.addEventListener('blur', function() {
+            const isValid = !this.value.trim() || isValidYouTubeUrl(this.value.trim());
+            trailerUrlFeedback.style.display = isValid ? 'none' : 'block';
+            this.classList.toggle('is-invalid', !isValid);
+        });
+
+
+        // gestion des personnes (ajout/suppression)
+        const personsData = {{ all_persons | tojson }};
+        let personCounter = {{ (current_persons|length if current_persons else 0) + 1 }};
+        
+        function addPersonRow() {
+            personCounter++;
+            const container = document.getElementById('persons_container');
+            
+            const newRow = document.createElement('div');
+            newRow.className = 'person-entry mb-2';
+            
+            let optionsHtml = '<option value="">Choisir...</option>';
+            personsData.forEach(function(person) {
+                optionsHtml += '<option value="' + person.id + '">' + person.name + '</option>';
+            });
+            
+            newRow.innerHTML = `
+                <div class="row">
+                    <div class="col-md-5 mb-2">
+                        <label class="form-label small">Personne</label>
+                        <select class="form-select person-select" name="person_${personCounter}">
+                            ${optionsHtml}
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small">Rôle</label>
+                        <select class="form-select person-role" name="person_${personCounter}_role">
+                            <option value="acteur">Acteur</option>
+                            <option value="réalisateur">Réalisateur</option>
+                            <option value="auteur">Auteur</option>
+                            <option value="compositeur">Compositeur</option>
+                            <option value="producteur">Producteur</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label small">Personnage</label>
+                        <input type="text" class="form-control person-character" name="person_${personCounter}_character">
+                    </div>
+                    <div class="col-md-1 d-flex align-items-end mb-2">
+                        <button type="button" class="btn btn-danger btn-sm remove-person" onclick="removePersonRow(this)">X</button>
+                    </div>
+                </div>
+            `;
+            container.appendChild(newRow);
+        }
+        
+        function removePersonRow(button) {
+            button.closest('.person-entry').remove();
+        }
+
+
+    </script>
+    {% include '_footer.html' %}
+</body>
+
+</html>

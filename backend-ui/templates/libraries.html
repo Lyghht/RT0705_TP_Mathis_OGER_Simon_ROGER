@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidéothèques - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = 'libraries' %}
+    {% include '_navbar.html' %}
+    
+    <div class="container mt-4 flex-grow-1 mb-5">
+        <div class="page-header">
+            <h4>Vidéothèques</h4>
+            {% if current_user %}
+                <button class="btn btn-sm btn-primary" onclick="document.getElementById('create-form').style.display='block';this.style.display='none'">+ Créer</button>
+            {% endif %}
+        </div>
+        
+        {% if current_user %}
+        <form method="POST" action="/libraries" id="create-form" class="mb-3" style="display:none">
+            <div class="row g-2">
+                <div class="col-md-2">
+                    <input type="text" class="form-control form-control-sm" name="name" placeholder="Nom *" required>
+                </div>
+                <div class="col-md-6">
+                    <textarea class="form-control form-control-sm" name="description" rows="1" placeholder="Description" style="resize: vertical;"></textarea>
+                </div>
+                <div class="col-md-2">
+                    <select class="form-control form-control-sm" id="visibility" name="visibility" required>
+                        <option value="" selected disabled>Visibilité*</option>
+                        <option value="public">Public</option>
+                        <option value="private">Privé</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Créer</button>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+        
+        {% if messages %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ messages[1] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+        
+        {% if library_items %}
+            <div class="items-grid">
+                {% for library_item in library_items %}
+                <a href="/library/{{ library_item.id }}" class="library-card">
+                    <h5 class="library-card-title">{{ library_item.name or '-' }}</h5>
+                    <p class="library-card-description">{{ library_item.description or 'Aucune description' }}</p>
+                    <p class="text-muted small mb-0 mt-2">
+                        <small>Propriétaire : {{ library_item.owner or '-' }}</small>
+                    </p>
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>Aucune vidéothèque trouvée</p>
+                {% if current_user %}
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('create-form').style.display='block'">Créer une vidéothèque</button>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if pagination and pagination.pages > 1 %}
+        <div class="pagination-container">
+            <nav>
+                <ul class="pagination pagination-sm">
+                    {% if pagination.page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="/libraries?page={{ pagination.page - 1 }}">Précédent</a>
+                    </li>
+                    {% endif %}
+                    {% for page_number in range(1, pagination.pages + 1) %}
+                    <li class="page-item {% if page_number == pagination.page %}active{% endif %}">
+                        <a class="page-link" href="/libraries?page={{ page_number }}">{{ page_number }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if pagination.page < pagination.pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="/libraries?page={{ pagination.page + 1 }}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    {% include '_footer.html' %}
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

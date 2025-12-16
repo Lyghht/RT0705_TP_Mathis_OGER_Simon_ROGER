@@ -1,0 +1,222 @@
+from flask import Blueprint, render_template, request, redirect
+from utils.utils import api_get, get_current_user, api_post, get_url_embed_youtube, upload_cover_image, get_persons_post_data
+from utils.tmdb_api import api_tmdb_search, api_tmdb_get_media
+
+add_media_bp = Blueprint('add_media', __name__)
+
+#Page d'ajout média
+@add_media_bp.route('/', methods=['GET'])
+def add_media():
+    current_user = get_current_user()
+    if not current_user:
+        return redirect('/login')
+
+    search_query = request.args.get('q', '')
+    table_type = request.args.get('table', '')
+    search_results = []
+    pagination = {}
+    try:
+        page = int(request.args.get('page', 1))
+    except:
+        page = 1
+
+    try:
+        if search_query and (table_type == 'externe' or table_type == 'interne'):
+            if table_type == 'externe':
+                response = api_tmdb_search(search_query, page)
+                if response:
+                    search_results = response['data']
+                    pagination = response['pagination']
+            else:
+                response = api_get(f'/search/media?q={search_query}&page={page}&per_page=20')
+                if response.status_code == 200:
+                    data = response.json()
+                    search_results = data.get('data', [])
+                    pagination = data.get('pagination', {})
+    except:
+        pass
+    
+    return render_template('add-media.html', search_results=search_results, pagination=pagination, search_query=search_query, table_type=table_type)
+
+#PAGE de preview avant ajout média
+#Le post ici sert à si on add un média depuis une base interne ou externe
+@add_media_bp.route('/preview', methods=['GET', 'POST'])
+def add_media_preview():
+    current_user = get_current_user()
+    if not current_user:
+        return redirect('/login')
+
+    data = {}
+    
+    # Récupérer les genres, franchises et personnes depuis la base
+    genres = []
+    franchises = []
+    persons = []
+    libraries = []
+    
+    try:
+        response = api_get(f'/users/{current_user["id"]}/libraries')
+        if response.status_code == 200:
+            libraries = response.json() or []
+        
+        response = api_get('/search/genres?q=&page=1&per_page=100')
+        if response.status_code == 200:
+            genres_data = response.json()
+            genres = genres_data.get('data', [])
+
+        response = api_get('/search/franchises?q=&page=1&per_page=100')
+        if response.status_code == 200:
+            franchises_data = response.json()
+            franchises = franchises_data.get('data', [])
+
+        response = api_get('/search/persons?q=&page=1&per_page=100')
+        if response.status_code == 200:
+            persons_data = response.json()
+            persons = persons_data.get('data', [])
+    except:
+        pass
+
+    #SI on veux la preview d'un média externe ou interne
+    if request.method == 'POST':
+        base = request.form.get('base') or None
+        try:
+            media_id = int(request.form.get('media_id'))
+        except:
+            media_id = None
+
+        if base == 'externe':
+            response = api_tmdb_get_media(media_id)
+            if response:
+                data = response
+        elif base == 'interne':
+            response = api_get(f'/media/{media_id}')
+            if response.status_code == 200:
+                data = response.json()
+                data['genres'] = [int(g['id']) for g in data['genres']]
+                
+    
+    return render_template('add-media-preview.html', libraries=libraries, data=data, genres=genres, franchises=franchises, persons=persons)
+
+#AJOUT d'un MEDIA
+@add_media_bp.route('/preview/add', methods=['POST'])
+def add_media_preview_add():
+    current_user = get_current_user()
+    if not current_user:
+        return redirect('/login')
+    
+    # Récupérer les genres, franchises et personnes pour le template en cas d'erreur
+    genres = []
+    franchises = []
+    persons = []
+    libraries = []
+    
+    try:
+        response = api_get(f'/users/{current_user["id"]}/libraries')
+        if response.status_code == 200:
+            libraries = response.json() or []
+
+        response = api_get('/search/genres?q=&page=1&per_page=100')
+        if response.status_code == 200:
+            genres_data = response.json()
+            genres = genres_data.get('data', [])
+    
+        response = api_get('/search/franchises?q=&page=1&per_page=100')
+        if response.status_code == 200:
+            franchises_data = response.json()
+            franchises = franchises_data.get('data', [])
+
+        response = api_get('/search/persons?q=&page=1&per_page=100')
+        if response.status_code == 200:
+            persons_data = response.json()
+            persons = persons_data.get('data', [])
+    except:
+        pass
+
+
+    title = request.form.get('title') or None
+    media_type = request.form.get('type') or None
+    try:
+        library_id = int(request.form.get('library')) or None
+    except:
+        library_id = None
+    visibility = request.form.get('visibility') or None
+    try:
+        release_year = int(request.form.get('year')) or None
+    except:
+        release_year = None
+    synopsis = request.form.get('synopsis') or None
+    trailer_url = request.form.get('trailer_url') or None
+    try:
+        franchise_id = int(request.form.get('franchise')) or None
+    except:
+        franchise_id = None
+
+    try:
+        franchise_order = int(request.form.get('franchise_order')) or None
+    except:
+        franchise_order = None
+
+    genres_selected = request.form.getlist('genres') or []
+    try:
+        duration = int(request.form.get('duration')) or None
+    except:
+        duration = None
+
+    #Champ obligatoires
+    if not title or not media_type or not library_id or not visibility:
+        return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Tous les champs obligatoires doivent être remplis'])
+    
+    # Validation de l'URL YouTube
+    if trailer_url:
+        trailer_url = get_url_embed_youtube(trailer_url)
+        if not trailer_url:
+            return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'L\'URL de la bande-annonce doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)'])
+
+    file = request.files.get('cover_image') or None
+    current_cover_url = request.form.get('current_cover_url') or None
+    cover_image_url = None
+
+    #Traitement de l'image
+    if current_cover_url:
+        if current_cover_url.startswith('https://image.tmdb.org/t/p/original/'):
+            cover_image_url = upload_cover_image(current_cover_url, True)
+        else:
+            cover_image_url = current_cover_url
+    elif file and file.filename:
+        cover_image_url = upload_cover_image(file)
+        if not cover_image_url:
+            return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Type de fichier non autorisé ou erreur lors de l\'upload de l\'image'])
+    
+    try:
+        # Convertir les genres en liste d'entiers
+        try:
+            genre_ids = [int(g) for g in genres_selected if g]
+        except:
+            genre_ids = []
+        
+        #TRAITEMENT DES PERSONNES (acteur, ou autre rôle)
+        persons_list = get_persons_post_data(request.form)
+        
+        data = {
+            'title': title,
+            'type': media_type,
+            'library_id': int(library_id),
+            'visibility': visibility,
+            'release_year': int(release_year) if release_year else None,
+            'duration': int(duration) if duration else None,
+            'synopsis': synopsis,
+            'cover_image_url': cover_image_url,
+            'trailer_url': trailer_url,
+            'franchise_id': int(franchise_id) if franchise_id else None,
+            'franchise_order': int(franchise_order) if franchise_order else None,
+            'genres': genre_ids,
+            'persons': persons_list
+        }
+        response = api_post('/media', data=data)
+        
+        if response.status_code == 201:
+            return redirect(f'/library/{library_id}')
+        else:
+            return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Erreur lors de l\'ajout'])
+    except Exception as e:
+        return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', f'Erreur lors de l\'ajout: {str(e)}'])

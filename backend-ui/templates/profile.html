@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Profil - la banane pixélisée</title>
+    <link rel="icon" type="image/svg+xml" href="/static/banana.svg">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="d-flex flex-column min-vh-100">
+    {% set active_page = 'profile' %}
+    {% include '_navbar.html' %}
+    
+    <div class="container mt-4 flex-grow-1 mb-5">
+        {% if messages %}
+            <div class="alert alert-{{ messages[0] }} alert-dismissible fade show" role="alert">
+                {{ messages[1] }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endif %}
+        
+        <h4 class="mb-2">Profil de : {{ profile_user.username }}</h4>
+        <p class="text-muted small mb-2">{{ profile_user.bio }}</p>
+        
+        {% if is_own_profile %}
+            <button class="btn btn-sm btn-outline-primary mb-3" id="edit-profile-button" onclick="document.getElementById('edit-profile-form').style.display='block';this.style.display='none'">Modifier le profil</button>
+            <form method="POST" action="/profile" id="edit-profile-form" style="display:none;" class="mb-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">Modifier le profil</h6>
+                        <div class="mb-2">
+                            <label for="username" class="form-label">Nom d'utilisateur *</label>
+                            <input type="text" class="form-control form-control-sm" id="username" name="username" value="{{ profile_user.username if profile_user else '' }}" required>
+                        </div>
+                        <div class="mb-2">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control form-control-sm" id="email" name="email" value="{{ profile_user.email if profile_user else '' }}" required>
+                        </div>
+                        <div class="mb-2">
+                            <label for="password" class="form-label">Nouveau mot de passe</label>
+                            <input type="password" class="form-control form-control-sm" id="password" name="password" placeholder="Laisser vide pour ne pas changer">
+                        </div>
+                        <div class="mb-2">
+                            <label for="bio" class="form-label">Bio</label>
+                            <textarea class="form-control form-control-sm" id="bio" name="bio" rows="2" maxlength="255">{{ profile_user.bio if profile_user else '' }}</textarea>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary btn-sm">Enregistrer</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('edit-profile-form').style.display='none';document.getElementById('edit-profile-button').style.display='inline-block';">Annuler</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+        
+        <hr>
+        <div class="page-header">
+            <h5>Vidéothèques</h5>
+            {% if is_own_profile %}
+                <button class="btn btn-sm btn-outline-primary" id="add-button" onclick="document.getElementById('form').style.display='block';this.style.display='none'">Ajouter une vidéothèque</button>
+            {% endif %}
+        </div>
+
+        {% if is_own_profile %}
+            <form method="POST" action="/profile/libraries" class="mb-3" id="form" style="display:none">
+                <input type="hidden" name="library_id" id="libraryId">
+                <input type="hidden" name="action" id="action" value="add">
+                <div class="row g-2">
+                    <div class="col-md-2">
+                        <input type="text" class="form-control form-control-sm" name="name" id="name" placeholder="Nom *" required>
+                    </div>
+                    <div class="col-md-6">
+                        <textarea class="form-control form-control-sm" name="description" id="description" rows="1" placeholder="Description" style="resize: vertical;"></textarea>
+                    </div>
+                    <div class="col-md-2">
+                        <select class="form-control form-control-sm" id="visibility" name="visibility" required>
+                            <option value="public">Public</option>
+                            <option value="private">Privé</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary btn-sm w-100" id="submitBtn">Ajouter</button>
+                    </div>
+                    <div class="col-md-1">
+                        <button type="button" class="btn btn-secondary btn-sm w-100" id="cancelBtn" onclick="cancelForm()">Annuler</button>
+                    </div>
+                </div>                
+            </form>
+        {% endif %}
+        
+        {% if libraries %}
+            <div class="items-grid">
+                {% for library_item in libraries %}
+                <a href="/library/{{ library_item.id }}" class="library-card">
+                    <h5 class="library-card-title">{{ library_item.name or '-' }}</h5>
+                    <p class="library-card-description">{{ library_item.description or 'Aucune description' }}</p>
+                    <p class="text-muted small mb-0 mt-2">
+                        <small>Propriétaire : {{ library_item.owner or '-' }}</small>
+                    </p>
+                    {% if is_own_profile %}
+                        <button class="btn btn-sm btn-outline-primary" onclick="editLibrary(event, {{ library_item.id }}, '{{ library_item.name }}', '{{ library_item.description }}', '{{ library_item.visibility }}')">Modifier</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteLibrary(event, {{ library_item.id }})">Supprimer</button>
+                    {% endif %}
+                </a>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <p>Aucune vidéothèque trouvée</p>
+                {% if is_own_profile %}
+                    <button class="btn btn-primary btn-sm" onclick="document.getElementById('create-form').style.display='block'">Créer une vidéothèque</button>
+                {% endif %}
+            </div>
+        {% endif %}
+        
+        {% if pagination and pagination.pages > 1 %}
+        <div class="pagination-container">
+            <nav>
+                <ul class="pagination pagination-sm">
+                    {% if current_page > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="/profile?page={{ current_page - 1 }}">Précédent</a>
+                    </li>
+                    {% endif %}
+                    {% for page_number in range(1, pagination.pages + 1) %}
+                    <li class="page-item {% if page_number == current_page %}active{% endif %}">
+                        <a class="page-link" href="/profile?page={{ page_number }}">{{ page_number }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if current_page < pagination.pages %}
+                    <li class="page-item">
+                        <a class="page-link" href="/profile?page={{ current_page + 1 }}">Suivant</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+    
+    <script>
+        {% if is_own_profile %}
+            const form = document.getElementById('form');
+            const libraryIdInput = document.getElementById('libraryId');
+            const nameInput = document.getElementById('name');
+            const descriptionInput = document.getElementById('description');
+            const visibilityInput = document.getElementById('visibility');
+            const submitBtn = document.getElementById('submitBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const addButton = document.getElementById('add-button');
+            const actionInput = document.getElementById('action');
+        
+            // On modifie
+            function editLibrary(event, id, name, description, visibility) {
+                event.stopPropagation();
+                event.preventDefault();
+                form.style.display = 'block';
+                if (addButton) addButton.style.display = 'none';
+                libraryIdInput.value = id;
+                nameInput.value = name;
+                visibilityInput.value = visibility;
+                descriptionInput.value = description || '';
+                actionInput.value = 'update';
+                submitBtn.textContent = 'Modifier';
+                cancelBtn.style.display = 'block';
+            }
+        
+            // On annule et on remet à 0
+            function cancelForm() {
+                form.reset();
+                libraryIdInput.value = '';
+                submitBtn.textContent = 'Ajouter';
+                form.style.display = 'none';
+                actionInput.value = 'add';
+                if (addButton) addButton.style.display = 'inline-block';
+            }
+            
+            // On supprime
+            function deleteLibrary(event, libraryId) {
+                event.stopPropagation();
+                event.preventDefault();
+                actionInput.value = 'delete';
+                libraryIdInput.value = libraryId;
+                if (confirm('Êtes-vous sûr de vouloir supprimer cette bibliothèque ?')) {
+                    form.submit();
+                }
+            }
+        {% endif %}
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {% include '_footer.html' %}
+</body>
+</html>
