@@ -1,4 +1,4 @@
--- Création table 'users'
+-- Création table users
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(100),
@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Création table 'libraries'
+-- Création table libraries
 CREATE TABLE IF NOT EXISTS libraries (
     id SERIAL PRIMARY KEY,
     owner_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -19,14 +19,14 @@ CREATE TABLE IF NOT EXISTS libraries (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Création table 'franchises'
+-- Création table franchises
 CREATE TABLE IF NOT EXISTS franchises (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT
 );
 
--- Création table 'media'
+-- Création table media
 CREATE TABLE IF NOT EXISTS media (
     id SERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -43,14 +43,14 @@ CREATE TABLE IF NOT EXISTS media (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
--- Création table 'persons' (Acteurs, Réalisateurs, etc.)
+-- Création table persons (Acteurs, Réalisateurs, etc.)
 CREATE TABLE IF NOT EXISTS persons (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     birthdate DATE
 );
 
--- Création table 'media_persons' (Table de liaison Média à Personnes)
+-- Création table media_persons (Table de liaison Média à Personnes)
 CREATE TABLE IF NOT EXISTS media_persons (
     media_id INT NOT NULL REFERENCES media(id) ON DELETE CASCADE,
     person_id INT NOT NULL REFERENCES persons(id) ON DELETE CASCADE,
@@ -59,13 +59,13 @@ CREATE TABLE IF NOT EXISTS media_persons (
     PRIMARY KEY (media_id, person_id, role)
 );
 
--- Création table 'genres'
+-- Création table genres
 CREATE TABLE IF NOT EXISTS genres (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE
 );
 
--- Création table 'media_genres' (Table de liaison Média à Genres)
+-- Création table media_genres (Table de liaison Média à Genres)
 CREATE TABLE IF NOT EXISTS media_genres (
     media_id INT NOT NULL REFERENCES media(id) ON DELETE CASCADE,
     genre_id INT NOT NULL REFERENCES genres(id) ON DELETE CASCADE,
