@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request
-from utils.utils import get_current_user
-from utils.utils_api import api_get, api_search
+from utils.utils import get_current_user, get_generic_view
+from utils.utils_api import api_get
 
 pages_bp = Blueprint('pages', __name__)
 
@@ -42,61 +42,15 @@ def home():
     
     return render_template('index.html', library_items=library_items, pagination=pagination, stats=stats, current_page=page, media_random=media_random)
 
-
 #PAGE USERS
 @pages_bp.route('/users', methods=['GET'])
 def users():
-    search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
-    
-    user_items = []
-    pagination = {}
-    messages = None
-    
-    user_items, pagination = api_search('users', search_query, page, 20)
-    if not user_items and not pagination:
-        messages = ['danger', 'Erreur lors du chargement des Users']
-    
-    return render_template('users.html', user_items=user_items, pagination=pagination, search_query=search_query, current_page=pagination.get('page', page), messages=messages)
+    user_items, pagination, search_query, page, messages = get_generic_view(request, 'users', 20)
+    return render_template('users.html', user_items=user_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
-
-#PAGE FRANCHISES
-@pages_bp.route('/franchises', methods=['GET'])
-def franchises():
-    search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
-    
-    franchise_items = []
-    pagination = {}
-    messages = None
-    
-    franchise_items, pagination = api_search('franchises', search_query, page, 20)
-    if not franchise_items or not pagination:
-        messages = ['danger', 'Erreur lors du chargement des franchises.']
-    
-    return render_template('franchises.html', franchise_items=franchise_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
 #PAGE GENRES
 @pages_bp.route('/genres', methods=['GET'])
 def genres():
-    search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
-    
-    genre_items = []
-    pagination = {}
-    messages = None
-    
-    genre_items, pagination = api_search('genres', search_query, page, 30)
-    if not genre_items and not pagination:
-        messages = ['danger', 'Erreur lors du chargement des genres']
-    
+    genre_items, pagination, search_query, page, messages = get_generic_view(request, 'genres', 30)
     return render_template('genres.html', genre_items=genre_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)

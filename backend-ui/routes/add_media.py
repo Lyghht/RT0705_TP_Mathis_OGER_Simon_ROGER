@@ -38,7 +38,7 @@ def add_media():
     except:
         pass
     
-    return render_template('add-media.html', search_results=search_results, pagination=pagination, search_query=search_query, table_type=table_type)
+    return render_template('add-media/add-media.html', search_results=search_results, pagination=pagination, search_query=search_query, table_type=table_type)
 
 #PAGE de preview avant ajout média
 #Le post ici sert à si on add un média depuis une base interne ou externe
@@ -90,7 +90,7 @@ def add_media_preview():
                 data['genres'] = [int(g['id']) for g in data['genres']]
                 
     
-    return render_template('add-media-preview.html', libraries=libraries, data=data, genres=genres, franchises=franchises, persons=persons)
+    return render_template('add-media/add-media-preview.html', libraries=libraries, data=data, genres=genres, franchises=franchises, persons=persons)
 
 #AJOUT d'un MEDIA
 @add_media_bp.route('/preview/add', methods=['POST'])
@@ -148,13 +148,13 @@ def add_media_preview_add():
 
     #Champ obligatoires
     if not title or not media_type or not library_id or not visibility:
-        return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Tous les champs obligatoires doivent être remplis'])
+        return render_template('add-media/add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Tous les champs obligatoires doivent être remplis'])
     
     # Validation de l'URL YouTube
     if trailer_url:
         trailer_url = get_url_embed_youtube(trailer_url)
         if not trailer_url:
-            return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'L\'URL de la bande-annonce doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)'])
+            return render_template('add-media/add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'L\'URL de la bande-annonce doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)'])
 
     file = request.files.get('cover_image') or None
     current_cover_url = request.form.get('current_cover_url') or None
@@ -169,7 +169,7 @@ def add_media_preview_add():
     elif file and file.filename:
         cover_image_url = upload_cover_image(file)
         if not cover_image_url:
-            return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Type de fichier non autorisé ou erreur lors de l\'upload de l\'image'])
+            return render_template('add-media/add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Type de fichier non autorisé ou erreur lors de l\'upload de l\'image'])
     
     try:
         # Convertir les genres en liste d'entiers
@@ -201,6 +201,6 @@ def add_media_preview_add():
         if response.status_code == 201:
             return redirect(f'/library/{library_id}')
         else:
-            return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Erreur lors de l\'ajout'])
+            return render_template('add-media/add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', 'Erreur lors de l\'ajout'])
     except Exception as e:
-        return render_template('add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', f'Erreur lors de l\'ajout: {str(e)}'])
+        return render_template('add-media/add-media-preview.html', libraries=libraries, genres=genres, franchises=franchises, persons=persons, messages=['danger', f'Erreur lors de l\'ajout: {str(e)}'])

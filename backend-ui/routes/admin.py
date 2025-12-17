@@ -12,7 +12,7 @@ def admin():
     if not is_admin():
         return redirect('/')
     current_user = get_current_user()
-    return render_template('admin.html', current_user=current_user)
+    return render_template('admin/admin.html', current_user=current_user)
 
 
 
@@ -82,7 +82,7 @@ def admin_persons():
     if not person_item or not pagination:
         messages = ['danger', 'Erreur lors du chargement des personnes']
     
-    return render_template('admin-persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
+    return render_template('admin/admin-persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
 
 #PAGE ADMIN GENRES
@@ -149,7 +149,7 @@ def admin_genres():
     if not genre_items or not pagination:
         messages = ['danger', 'Erreur lors du chargement des genres']
     
-    return render_template('admin-genres.html', genre_items=genre_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
+    return render_template('admin/admin-genres.html', genre_items=genre_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
 
 #PAGE ADMIN FRANCHISES
@@ -217,7 +217,7 @@ def admin_franchises():
     if not franchise_items or not pagination:
         messages = ['danger', 'Erreur lors du chargement des franchises']
     
-    return render_template('admin-franchises.html', franchise_items=franchise_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
+    return render_template('admin/admin-franchises.html', franchise_items=franchise_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
 
 #PAGE ADMIN USERS
@@ -283,5 +283,5 @@ def admin_users():
     if not user_items or not pagination:
         messages = ['danger', 'Erreur lors du chargement des utilisateurs']
     
-    return render_template('admin-users.html', user_items=user_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
+    return render_template('admin/admin-users.html', user_items=user_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 

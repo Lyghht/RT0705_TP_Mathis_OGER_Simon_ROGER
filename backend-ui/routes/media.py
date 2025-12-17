@@ -37,7 +37,7 @@ def media():
     except:
         pass
     
-    return render_template('media.html', media_items=media_items, pagination=pagination, search_query=search_query, current_page=page, franchise_id=franchise_id, genre_id=genre_id)
+    return render_template('media/media.html', media_items=media_items, pagination=pagination, search_query=search_query, current_page=page, franchise_id=franchise_id, genre_id=genre_id)
 
 #PAGE MEDIA DETAILLEE
 @media_bp.route('/<int:media_id>', methods=['GET'])
@@ -68,6 +68,11 @@ def media_details(media_id):
             response = api_get(f'/media/{media_id}/persons')
             if response.status_code == 200:
                 persons = response.json()
+        elif response.status_code == 403:
+            # Accès refusé car le médai est privée ou utilisateur n'a pas les droits
+            return render_template('error.html', error_code=403, error_message="Accès refusé à ce média"), 403
+        elif response.status_code == 404:
+            return render_template('error.html', error_code=404, error_message="Média non trouvée"), 404
         else:
             return redirect('/media')
 
@@ -79,7 +84,7 @@ def media_details(media_id):
     if current_user and library_data:
         is_owner = current_user.get("id") == library_data.get("owner_id") or current_user.get("role") == "admin"
 
-    return render_template('display-media.html', media=media_data, persons=persons, library=library_data, franchise=franchise_data,is_owner=is_owner)
+    return render_template('media/display-media.html', media=media_data, persons=persons, library=library_data, franchise=franchise_data,is_owner=is_owner)
 
 
 #PAGE MODIFICATION MEDIA
@@ -138,7 +143,7 @@ def edit_media(media_id):
     except Exception as e:
         return redirect(f'/media/{media_id}')
         
-    return render_template('edit-media.html', media=media, genres=genres, franchises=franchises, all_persons=all_persons,current_persons=current_persons,current_genre_ids=current_genre_ids)
+    return render_template('media/edit-media.html', media=media, genres=genres, franchises=franchises, all_persons=all_persons,current_persons=current_persons,current_genre_ids=current_genre_ids)
 
 #POST MODIFICATION MEDIA
 @media_bp.route('/<int:media_id>/edit', methods=['POST'])
@@ -222,14 +227,14 @@ def edit_media_post(media_id):
     #param obligatoire
     if not title or not media_type or not visibility:
         media_obj, current_genre_ids = build_media_if_error()
-        return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Tous les champs obligatoires doivent être remplis'])
+        return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Tous les champs obligatoires doivent être remplis'])
     
     # validation de l'URL YouTube
     if trailer_url:
         trailer_url = get_url_embed_youtube(trailer_url)
         if not trailer_url:
             media_obj, current_genre_ids = build_media_if_error()
-            return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'L\'URL de la bande-annonce doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)'])
+            return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'L\'URL de la bande-annonce doit être un lien YouTube valide (https://youtube.com/ ou https://www.youtube.com/)'])
     
 
     #TRAITEMENT IMAGE
@@ -241,7 +246,7 @@ def edit_media_post(media_id):
         cover_image_url = upload_cover_image(file)
         if not cover_image_url:
             media_obj, current_genre_ids = build_media_if_error(cover_img_url=current_cover_url)
-            return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Type de fichier non autorisé ou erreur lors de l\'upload de l\'image'])
+            return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Type de fichier non autorisé ou erreur lors de l\'upload de l\'image'])
     elif current_cover_url:
         cover_image_url = current_cover_url
     
@@ -275,7 +280,7 @@ def edit_media_post(media_id):
             return redirect(f'/media/{media_id}')
         else:
             media_obj, current_genre_ids = build_media_if_error(cover_img_url=cover_image_url, genre_ids_list=genre_ids)
-            return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Erreur lors de la modification'])
+            return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Erreur lors de la modification'])
     except Exception as e:
         media_obj, current_genre_ids = build_media_if_error(cover_img_url=cover_image_url)
-        return render_template('edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', f'Erreur lors de la modification'])
+        return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', f'Erreur lors de la modification'])

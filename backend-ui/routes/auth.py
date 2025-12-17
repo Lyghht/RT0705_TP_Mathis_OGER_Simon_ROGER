@@ -35,7 +35,7 @@ def login():
                 messages = ['danger', 'Erreur lors de la connexion.']
     
     #Affichage de la page de connexion
-    return render_template('login.html', messages=messages)
+    return render_template('auth/login.html', messages=messages)
 
 
 #Page d'inscription
@@ -69,7 +69,7 @@ def register():
                 messages = ['danger', 'Erreur lors de l\'inscription']
     
     #Affichage de la page d'inscription
-    return render_template('register.html', messages=messages)
+    return render_template('auth/register.html', messages=messages)
 
 
 #Page de déconnexion

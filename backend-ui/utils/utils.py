@@ -3,6 +3,7 @@ from flask import session
 import os
 import uuid
 import re
+from utils.utils_api import api_search
 
 API_BASE_URL = 'http://nginx/api'
 
@@ -30,6 +31,24 @@ def is_real_admin():
     if not user:
         return False
     return user.get('role') == 'admin'
+
+#Gestion generique des requêtes simple
+def get_generic_view(request, base, per_page):
+    search_query = request.args.get('q', '')
+    try:
+        page = int(request.args.get('page', 1))
+    except:
+        page = 1
+    
+    items = []
+    pagination = {}
+    messages = None
+    
+    items, pagination = api_search(base, search_query, page, per_page)
+    if not items and not pagination:
+        messages = ['danger', 'Erreur lors du chargement.']
+    
+    return items, pagination, search_query, page, messages
 
 def upload_cover_image(file, url=False):
     """Upload une image de couverture et retourne l'URL ou None en cas d'erreur."""

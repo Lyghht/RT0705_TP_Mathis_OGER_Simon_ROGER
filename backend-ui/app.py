@@ -9,11 +9,13 @@ from routes.media import media_bp
 from routes.persons import persons_bp
 from routes.add_media import add_media_bp
 from routes.libraries import libraries_bp
+from routes.franchises import franchises_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY_UI')
 
 app.register_blueprint(add_media_bp, url_prefix='/add-media')
+app.register_blueprint(franchises_bp, url_prefix='/franchises')
 app.register_blueprint(admin_bp, url_prefix='/admin')
 app.register_blueprint(auth_bp)
 app.register_blueprint(libraries_bp)

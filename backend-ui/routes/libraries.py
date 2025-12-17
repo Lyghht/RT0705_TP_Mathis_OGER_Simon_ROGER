@@ -28,7 +28,7 @@ def libraries():
             library_items = []
             pagination = {}
     except:
-        return render_template('libraries.html', library_items=library_items, pagination=pagination, current_page=page, messages=['danger', 'Erreur avec le serveur'])
+        return render_template('libraries/libraries.html', library_items=library_items, pagination=pagination, current_page=page, messages=['danger', 'Erreur avec le serveur'])
     
     if request.method == 'POST':
         current_user = get_current_user()
@@ -40,7 +40,7 @@ def libraries():
         visibility = request.form.get('visibility')
         
         if not name or not visibility:
-            return render_template('libraries.html', library_items=library_items, pagination=pagination,current_page=page, messages=['danger', 'Le nom et la visibilité sont requis'])
+            return render_template('libraries/libraries.html', library_items=library_items, pagination=pagination,current_page=page, messages=['danger', 'Le nom et la visibilité sont requis'])
         else:
             try:
                 data = {'name': name, 'description': description, 'visibility': visibility}
@@ -48,11 +48,11 @@ def libraries():
                 if response.status_code == 201:
                     return redirect('/libraries')
                 else:
-                    return render_template('libraries.html', library_items=library_items, pagination=pagination,current_page=page, messages=['danger', 'Erreur lors de la création'])
+                    return render_template('libraries/libraries.html', library_items=library_items, pagination=pagination,current_page=page, messages=['danger', 'Erreur lors de la création'])
             except:
-                return render_template('libraries.html', library_items=library_items, pagination=pagination,current_page=page, messages=['danger', 'Erreur lors de la création'])
+                return render_template('libraries/libraries.html', library_items=library_items, pagination=pagination,current_page=page, messages=['danger', 'Erreur lors de la création'])
 
-    return render_template('libraries.html', library_items=library_items, pagination=pagination, current_page=page)
+    return render_template('libraries/libraries.html', library_items=library_items, pagination=pagination, current_page=page)
 
 
 
@@ -63,108 +63,85 @@ def library(library_id):
     library_data = None
     media_items = []
     pagination = {}
-    is_owner = False
     is_admin = current_user and current_user.get('role') == 'admin'
     messages = None
+
+    #Récupération d'une librairie
+    try:
+        response = api_get(f'/libraries/{library_id}')
+        if response.status_code == 200:
+            library_data = response.json()
+            is_owner = current_user.get('id') == library_data.get('owner_id') or is_admin
+    except:
+        is_owner = False
+
     
     try:
         page = int(request.args.get('page', 1))
     except:
         page = 1
-    
-    # gestion de la delete d'un média
-    if request.method == 'POST' and request.form.get('action') == 'delete_media':
+
+    if request.method == 'POST':
         if not current_user:
             return redirect('/login')
-        
+        elif not is_owner:
+            messages = ['danger', 'Vous n\'avez pas les droits pour supprimer ce média']
+    
+    # gestion de la delete d'un média
+    if request.method == 'POST' and request.form.get('action') == 'delete_media':        
         try:
             media_id = int(request.form.get('media_id'))
         except:
             media_id = None
+            
         if media_id:
-            try:
-                response = api_get(f'/libraries/{library_id}')
+            try:    
+                response = api_delete(f'/media/{media_id}')
                 if response.status_code == 200:
-                    library_data = response.json()
-                    is_owner = current_user.get('id') == library_data.get('owner_id') or is_admin
-                    
-                    if is_owner:
-                        response = api_delete(f'/media/{media_id}')
-                        if response.status_code == 200:
-                            messages = ['success', 'Média supprimé avec succès']
-                        else:
-                            messages = ['danger', 'Erreur lors de la suppression du média, le média n\'a pas été trouvé']
-
-                    else:
-                        messages = ['danger', 'Vous n\'avez pas les droits pour supprimer ce média']
-            except Exception as e:
+                    messages = ['success', 'Média supprimé avec succès']
+                else:
+                    messages = ['danger', 'Erreur lors de la suppression du média, le média n\'a pas été trouvé']
+            except:
                 messages = ['danger', 'Erreur lors de la suppression du média']
     
     # Gestion de la modification de la vidéothèque
-    if request.method == 'POST' and request.form.get('action') == 'update_library':
-        if not current_user:
-            return redirect('/login')
-        
-        try:
-            response = api_get(f'/libraries/{library_id}')
-            if response.status_code == 200:
-                library_data = response.json()
-                is_owner = current_user.get('id') == library_data.get('owner_id') or is_admin
-                
-                if is_owner:
-                    data = {}
-                    if request.form.get('name'):
-                        data['name'] = request.form.get('name')
-                    if 'description' in request.form:
-                        data['description'] = request.form.get('description') or None
-                    if request.form.get('visibility'):
-                        data['visibility'] = request.form.get('visibility')
+    if request.method == 'POST' and request.form.get('action') == 'update_library':        
+        try:                
+            data = {}
+            if request.form.get('name'):
+                data['name'] = request.form.get('name')
+            if 'description' in request.form:
+                data['description'] = request.form.get('description') or None
+            if request.form.get('visibility'):
+                data['visibility'] = request.form.get('visibility')
                     
-                    response = api_patch(f'/libraries/{library_id}', data=data)
-                    if response.status_code == 200:
-                        messages = ['success', 'Vidéothèque modifiée avec succès']
-                    else:
-                        messages = ['danger', 'Erreur lors de la modification de la vidéothèque']
-                else:
-                    messages = ['danger', 'Vous n\'avez pas les droits pour modifier cette vidéothèque']
-        except Exception as e:
+            response = api_patch(f'/libraries/{library_id}', data=data)
+            if response.status_code == 200:
+                messages = ['success', 'Vidéothèque modifiée avec succès']
+            else:
+                messages = ['danger', 'Erreur lors de la modification de la vidéothèque']
+        except:
             messages = ['danger', 'Erreur lors de la modification']
     
     # Gestion de la suppression de la vidéothèque
-    if request.method == 'POST' and request.form.get('action') == 'delete_library':
-        if not current_user:
-            return redirect('/login')
-        
-        try:
-            response = api_get(f'/libraries/{library_id}')
+    if request.method == 'POST' and request.form.get('action') == 'delete_library':        
+        try:                
+            response = api_delete(f'/libraries/{library_id}')
             if response.status_code == 200:
-                library_data = response.json()
-                is_owner = current_user.get('id') == library_data.get('owner_id') or is_admin
-                
-                if is_owner:
-                    response = api_delete(f'/libraries/{library_id}')
-                    if response.status_code == 200:
-                        return redirect('/libraries')
-                    else:
-                        messages = ['danger', 'Erreur lors de la suppression de la vidéothèque']
-                else:
-                    messages = ['danger', 'Vous n\'avez pas les droits pour supprimer cette vidéothèque']
-        except Exception as e:
+                messages = ['success', 'Vidéothèque supprimé avec succès']
+            else:
+                messages = ['danger', 'Erreur lors de la suppression de la vidéothèque']
+        except:
             messages = ['danger', 'Erreur lors de la suppression']
     
     # Affichage normal (GET)
     try:
-        response = api_get(f'/libraries/{library_id}')
-        if response.status_code == 200:
-            library_data = response.json()
-            is_owner = current_user and (current_user.get('id') == library_data.get('owner_id') or is_admin)
-            
+        if library_data and library_data.get('owner_id'):
             # récupération proprio
-            if library_data and library_data.get('owner_id'):
-                owner_id = library_data.get('owner_id')
-                response = api_get(f'/users/{owner_id}')
-                if response.status_code == 200:
-                    library_data['owner'] = response.json().get('username', '-')
+            owner_id = library_data.get('owner_id')
+            response = api_get(f'/users/{owner_id}')
+            if response.status_code == 200:
+                library_data['owner'] = response.json().get('username', '-')
             
             #récupération média
             response = api_get(f'/search/media?q=&library_id={library_id}&page={page}&per_page=10')
@@ -172,17 +149,15 @@ def library(library_id):
                 data = response.json()
                 media_items = data.get('data', [])
                 pagination = data.get('pagination', {})
-        elif response.status_code == 403:
-            # Accès refusé car la vidéoothèque privée ou utilisateur n'a pas les droits
-            return render_template('error.html', error_code=403, error_message="Accès refusé à cette vidéothèque"), 403
-        elif response.status_code == 404:
-            # Bibliothèque non trouvée
+            elif response.status_code == 403:
+                # Accès refusé car la vidéothèque privée ou utilisateur n'a pas les droits
+                return render_template('error.html', error_code=403, error_message="Accès refusé à cette vidéothèque"), 403
+            elif response.status_code == 404:
+                # Bibliothèque non trouvée
+                return render_template('error.html', error_code=404, error_message="Vidéothèque non trouvée"), 404
+        elif not library_data:
             return render_template('error.html', error_code=404, error_message="Vidéothèque non trouvée"), 404
     except:
-        pass
+        return redirect('/libraries')
     
-    # Si library_data est None c'est quelle existe pas
-    if not library_data:
-        return render_template('error.html', error_code=404, error_message="Vidéothèque non trouvée"), 404
-    
-    return render_template('library.html', library_data=library_data, media_items=media_items, pagination=pagination, current_page=page, is_owner=is_owner, is_admin=is_admin, messages=messages)
+    return render_template('libraries/library.html', library_data=library_data, media_items=media_items, pagination=pagination, current_page=page, is_owner=is_owner, is_admin=is_admin, messages=messages)

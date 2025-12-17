@@ -34,7 +34,7 @@
         {% if franchise_items %}
             <div class="compact-grid">
                 {% for franchise_item in franchise_items %}
-                <a href="/media?franchise_id={{ franchise_item.id }}" class="compact-card">
+                <a href="/franchises/{{ franchise_item.id }}/media" class="compact-card">
                     <div class="compact-card-title">{{ franchise_item.name or '-' }}</div>
                     {% if franchise_item.description %}
                     <div class="compact-card-subtitle">{{ franchise_item.description[:50] }}{% if franchise_item.description|length > 50 %}...{% endif %}</div>

@@ -1,26 +1,14 @@
 from flask import Blueprint, render_template, request
 from utils.utils_api import api_get, api_search
+from utils.utils import get_generic_view
 
 persons_bp = Blueprint('persons', __name__)
 
 #PAGE PERSONNES
 @persons_bp.route('/', methods=['GET'])
 def persons():
-    search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
-    
-    person_items = []
-    pagination = {}
-    messages=None
-    
-    person_items, pagination = api_search('persons', search_query, page, 25)
-    if not person_items and not pagination:
-        messages = ['danger', 'Erreur lors du chargement des personnes']
-    
-    return render_template('persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
+    person_items, pagination, search_query, page, messages = get_generic_view(request, 'persons', 25)
+    return render_template('persons/persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)
 
 
 #PAGE PERSONNE DETAILLEE
@@ -40,4 +28,4 @@ def person(person_id):
     except:
         pass
     
-    return render_template('person.html', person_data=person_data, media_items=media_items)
+    return render_template('persons/person.html', person_data=person_data, media_items=media_items)
