@@ -34,14 +34,17 @@
 </header>
 
 <script>
-if (localStorage.getItem('theme') === 'dark') {
-    document.body.classList.add('dark');
-    document.getElementById('theme-toggle').textContent = 'Claire';
-}
-function toggleTheme() {
-    document.body.classList.toggle('dark');
-    const isDark = document.body.classList.contains('dark');
-    document.getElementById('theme-toggle').textContent = isDark ? 'Claire' : 'Sombre';
-    localStorage.setItem('theme', isDark ? 'dark' : 'light');
-}
+    //On applique le theme que la personne a
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark');
+        document.getElementById('theme-toggle').textContent = 'Claire';
+    }
+
+    //ch&ngement du theme
+    function toggleTheme() {
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        document.getElementById('theme-toggle').textContent = isDark ? 'Claire' : 'Sombre';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
 </script>

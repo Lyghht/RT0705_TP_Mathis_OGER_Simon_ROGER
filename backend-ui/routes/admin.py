@@ -78,8 +78,8 @@ def admin_persons():
     person_items = []
     pagination = {}
     
-    person_item, pagination = api_search('persons', search_query, page, 10)
-    if not person_item or not pagination:
+    person_items, pagination = api_search('persons', search_query, page, 10)
+    if not person_items or not pagination:
         messages = ['danger', 'Erreur lors du chargement des personnes']
     
     return render_template('admin/admin-persons.html', person_items=person_items, pagination=pagination, search_query=search_query, current_page=page, messages=messages)

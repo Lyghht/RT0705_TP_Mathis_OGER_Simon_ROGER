@@ -242,6 +242,29 @@ a:hover {
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
+
+/* PAGE ERREUR */
+.error-page {
+    padding: 4rem 1rem;
+}
+.error-logo {
+    width: 80px;
+    height: auto;
+    opacity: 0.6;
+}
+.error-code {
+    font-size: 5rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+    line-height: 1;
+}
+.error-message {
+    font-size: 1.1rem;
+    color: #666;
+    margin-top: 0.5rem;
+}
+
 /* les couleurs du dark and white mode */
 body.dark {
     background: #1a1a1a;
@@ -440,6 +463,17 @@ body.dark footer .text-muted {
 
 body.dark .empty-state {
     color: #aaa;
+}
+
+/* PAGE ERREUR */
+body.dark .error-code {
+    color: #fff;
+}
+body.dark .error-message {
+    color: #aaa;
+}
+body.dark .error-logo {
+    filter: brightness(0.8);
 }
 
 /* un peu de responsive quand même */

@@ -152,7 +152,6 @@ def edit_media_post(media_id):
         franchise_id = int(request.form.get('franchise')) or None
     except:
         franchise_id = None
-
     try:
         franchise_order = int(request.form.get('franchise_order')) or None
     except:
