@@ -26,6 +26,6 @@ def person(person_id):
         if response.status_code == 200:
             media_items = response.json()
     except:
-        pass
+        return render_template('error.html', error_code=404, error_message="Impossible de charger les informations"), 500
     
     return render_template('persons/person.html', person_data=person_data, media_items=media_items)

@@ -23,7 +23,7 @@ def libraries():
                         data_response = response.json()
                         library['owner'] = data_response.get('username', '-')
                 except:
-                    pass
+                    library['owner'] = '-'
         else:
             library_items = []
             pagination = {}
@@ -55,6 +55,55 @@ def libraries():
     return render_template('libraries/libraries.html', library_items=library_items, pagination=pagination, current_page=page)
 
 
+#Delete d'une librairie
+def delete_media(request):
+    try:
+        media_id = int(request.form.get('media_id'))
+    except:
+        media_id = None
+            
+    if media_id:
+        try:    
+            response = api_delete(f'/media/{media_id}')
+            if response.status_code == 200:
+                messages = ['success', 'Média supprimé avec succès']
+            else:
+                messages = ['danger', 'Erreur lors de la suppression du média, le média n\'a pas été trouvé']
+        except:
+            messages = ['danger', 'Erreur lors de la suppression du média']
+    return messages
+
+#Edit d'une librairie
+def update_library(request, library_id):
+    try:                
+        data = {}
+        if request.form.get('name'):
+            data['name'] = request.form.get('name')
+        if 'description' in request.form:
+            data['description'] = request.form.get('description') or None
+        if request.form.get('visibility'):
+            data['visibility'] = request.form.get('visibility')
+                    
+        response = api_patch(f'/libraries/{library_id}', data=data)
+        if response.status_code == 200:
+            messages = ['success', 'Vidéothèque modifiée avec succès']
+        else:
+            messages = ['danger', 'Erreur lors de la modification de la vidéothèque']
+    except:
+        messages = ['danger', 'Erreur lors de la modification']
+    return messages
+
+def delete_librairy(library_id):
+    try:                
+        response = api_delete(f'/libraries/{library_id}')
+        if response.status_code == 200:
+            messages = ['success', 'Vidéothèque supprimé avec succès']
+        else:
+            messages = ['danger', 'Erreur lors de la suppression de la vidéothèque']
+    except:
+        messages = ['danger', 'Erreur lors de la suppression']
+    return messages
+
 
 #Vue d'une vidéothèque
 @libraries_bp.route('/library/<int:library_id>', methods=['GET', 'POST'])
@@ -85,55 +134,19 @@ def library(library_id):
         if not current_user:
             return redirect('/login')
         elif not is_owner:
-            messages = ['danger', 'Vous n\'avez pas les droits pour supprimer ce média']
-    
-    # gestion de la delete d'un média
-    if request.method == 'POST' and request.form.get('action') == 'delete_media':        
-        try:
-            media_id = int(request.form.get('media_id'))
-        except:
-            media_id = None
+            messages = ['danger', 'Vous n\'avez pas les droits pour supprimer ce média'] 
+        # gestion de la delete d'un média
+        elif request.form.get('action') == 'delete_media':
+            messages = delete_media(request)
+        # Gestion de la modification de la vidéothèque
+        elif request.form.get('action') == 'update_library':
+            messages = update_library(request, library_id)
+         # Gestion de la suppression de la vidéothèque
+        elif request.form.get('action') == 'delete_library':        
+            messages = delete_librairy(library_id)
+        else:
+            messages = ['danger', 'L\'action n\'est pas invalide']
             
-        if media_id:
-            try:    
-                response = api_delete(f'/media/{media_id}')
-                if response.status_code == 200:
-                    messages = ['success', 'Média supprimé avec succès']
-                else:
-                    messages = ['danger', 'Erreur lors de la suppression du média, le média n\'a pas été trouvé']
-            except:
-                messages = ['danger', 'Erreur lors de la suppression du média']
-    
-    # Gestion de la modification de la vidéothèque
-    if request.method == 'POST' and request.form.get('action') == 'update_library':        
-        try:                
-            data = {}
-            if request.form.get('name'):
-                data['name'] = request.form.get('name')
-            if 'description' in request.form:
-                data['description'] = request.form.get('description') or None
-            if request.form.get('visibility'):
-                data['visibility'] = request.form.get('visibility')
-                    
-            response = api_patch(f'/libraries/{library_id}', data=data)
-            if response.status_code == 200:
-                messages = ['success', 'Vidéothèque modifiée avec succès']
-            else:
-                messages = ['danger', 'Erreur lors de la modification de la vidéothèque']
-        except:
-            messages = ['danger', 'Erreur lors de la modification']
-    
-    # Gestion de la suppression de la vidéothèque
-    if request.method == 'POST' and request.form.get('action') == 'delete_library':        
-        try:                
-            response = api_delete(f'/libraries/{library_id}')
-            if response.status_code == 200:
-                messages = ['success', 'Vidéothèque supprimé avec succès']
-            else:
-                messages = ['danger', 'Erreur lors de la suppression de la vidéothèque']
-        except:
-            messages = ['danger', 'Erreur lors de la suppression']
-    
     # Affichage normal (GET)
     try:
         if library_data and library_data.get('owner_id'):

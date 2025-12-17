@@ -16,7 +16,7 @@ def get_current_user():
         if response.status_code == 200:
             return response.json()
     except:
-        pass
+        return None
     return None
 
 def is_admin():
@@ -121,3 +121,18 @@ def get_url_embed_youtube(url):
             return f"https://www.youtube.com/embed/{url}"
         except:
             return None
+
+#récupére les donnée pour chargé un média
+def get_data_for_media():
+    genres, _ = api_search('genres', '', 1, 100)
+    franchises, _ = api_search('franchises', '', 1, 100)
+    persons, _ = api_search('persons', '', 1, 100)
+
+    if not genres:
+        genres = []
+    if not franchises:
+        franchises = []
+    if not persons:
+        persons = []
+
+    return genres, franchises, persons

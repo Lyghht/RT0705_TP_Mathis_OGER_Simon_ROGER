@@ -38,7 +38,7 @@ def home():
             if response.status_code == 200:
                 media_random = response.json()
     except:
-        pass
+        return render_template('error.html', error_code=404, error_message="Impossible de charger les informations"), 500
     
     return render_template('index.html', library_items=library_items, pagination=pagination, stats=stats, current_page=page, media_random=media_random)
 

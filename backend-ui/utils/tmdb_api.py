@@ -26,7 +26,7 @@ def api_tmdb_search_film(search_query, page):
                 'pages': data['total_pages'],
             }
     except:
-        pass
+        search_results = []
     return search_results
 
 
@@ -111,7 +111,7 @@ def api_tmdb_get_film(media_id):
 
             return media_data
     except:
-        pass
+        return None
     return None
 
 
@@ -144,7 +144,7 @@ def api_tmdb_search_series(search_query, page):
                 'pages': data['total_pages'],
             }
     except:
-        pass
+        search_results = []
     return search_results
 
 #Recupère une série dans TMDB
@@ -215,6 +215,6 @@ def api_tmdb_get_series(media_id):
             }
 
             return media_data
-    except Exception as e:
-        return e
+    except:
+        return None
     return None

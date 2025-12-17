@@ -72,9 +72,9 @@ def profile(user_id=None):
                         data_response = response.json()
                         library['owner'] = data_response.get('username', '-')
                 except:
-                    pass
+                    library['owner'] = '-'
     except:
-        pass
+        return render_template('error.html', error_code=404, error_message="Impossible de charger les informations"), 500
     
     return render_template('profile.html', profile_user=profile_user, libraries=libraries, pagination=pagination, current_page=page, is_own_profile=is_own_profile, messages=messages)
 
