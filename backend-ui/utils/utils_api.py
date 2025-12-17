@@ -2,7 +2,8 @@ import requests
 from flask import session
 import os
 
-API_BASE_URL = 'http://nginx/api'
+API_BASE_URL = f'http://backend-api:{os.getenv('PORT_API')}/api'
+#Si on veux contacter l'api par l'extérieur il faut faire http://nginx/api
 
 #GET sur l'api
 def api_get(endpoint):
@@ -15,7 +16,7 @@ def api_get(endpoint):
 #GET sur l'api TMDB
 def api_get_tmdb(endpoint):
     url = f"https://api.themoviedb.org/3{endpoint}"
-    headers = {'Authorization': f"Bearer {os.environ.get('SECRET_TMDB')}"}
+    headers = {'Authorization': f"Bearer {os.getenv('TOKEN_API_TMDB')}"}
     return requests.get(url, headers=headers)
 
 #POST sur l'api

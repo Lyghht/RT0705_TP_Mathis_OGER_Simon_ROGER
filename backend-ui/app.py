@@ -37,4 +37,4 @@ def internal_server_error(error):
     return render_template('error.html', error_code=500, error_message="Erreur interne du serveur"), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=80)
+    app.run(debug=True, host='0.0.0.0', port=os.environ.get('PORT_UI'))

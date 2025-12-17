@@ -1,5 +1,5 @@
 server {
-    listen 80;
+    listen ${PORT_NGINX_INTERNE};
     server_name localhost;
 
     client_max_body_size 16M;
@@ -9,12 +9,12 @@ server {
         alias /usr/share/nginx/html/static/;
     }
 
-    #Route pour l'api
-    location /api/ {
-        proxy_pass http://backend-api:5000/api/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
+    #Route pour l'api si on ouvre l'api à l'extérieur
+    #location /api/ {
+    #    proxy_pass http://backend-api:${PORT_API}/api/;
+    #    proxy_set_header Host $host;
+    #    proxy_set_header X-Real-IP $remote_addr;
+    #}
 
     #Route pour le front
     location / {

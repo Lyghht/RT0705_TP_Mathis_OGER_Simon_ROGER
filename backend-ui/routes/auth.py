@@ -27,8 +27,9 @@ def login():
                 response = api_post('/login',data={'email': email, 'password': password})
                 if response.status_code == 200:
                     session['auth_token'] = response.json().get('token')
+                    return render_template('error.html', error_code=404, error_message=response.json()), 500
                     #L'utilisateur est connecté on le met à l'accueil
-                    return redirect('/')
+                    #return redirect('/')
                 else:
                     messages = ['danger', 'Email ou mot de passe invalide']
             except:

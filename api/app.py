@@ -29,7 +29,7 @@ def handle_generic_error(e):
     return handle_exception(e)
 
 # Connexion à la base de données
-app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@postgres_db:5432/{os.getenv('POSTGRES_DB')}"
+app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('PORT_POSTGRES')}/{os.getenv('POSTGRES_DB')}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -44,4 +44,4 @@ app.register_blueprint(persons_bp, url_prefix='/api/persons')
 app.register_blueprint(search_bp, url_prefix='/api/search')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=os.getenv('PORT_API'), debug=True)
