@@ -3,9 +3,8 @@ from flask import session
 import os
 import uuid
 import re
-from utils.utils_api import api_search
+from utils.utils_api import api_search, API_BASE_URL
 
-API_BASE_URL = 'http://nginx/api'
 
 #Donne l'utilisateur actuel
 def get_current_user():
