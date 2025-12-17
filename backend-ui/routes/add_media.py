@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect
-from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data
+from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data, get_data_for_media
 from utils.utils_api import api_get, api_post, api_search
 from utils.tmdb_api import api_tmdb_search_film, api_tmdb_get_film, api_tmdb_search_series, api_tmdb_get_series
 
@@ -36,7 +36,7 @@ def add_media():
             else:
                 search_results, pagination = api_search('media', search_query, page, 20)
     except:
-        pass
+        return render_template('error.html', error_code=500, error_message="Impossible de charger les informations"), 500
     
     return render_template('add-media/add-media.html', search_results=search_results, pagination=pagination, search_query=search_query, table_type=table_type)
 
@@ -50,22 +50,17 @@ def add_media_preview():
 
     data = {}
     
-    # Récupérer les genres, franchises et personnes depuis la base
-    genres = []
-    franchises = []
-    persons = []
-    libraries = []
-    
+    # Récupére les données   
     try:
         response = api_get(f'/users/{current_user["id"]}/libraries')
         if response.status_code == 200:
-            libraries = response.json() or []
-        
-        genres, _ = api_search('genres', '', 1, 100)
-        franchises, _ = api_search('franchises', '', 1, 100)
-        persons, _ = api_search('persons', '', 1, 100)
-    except:
-        pass
+            libraries = response.json()
+        else:
+            libraries = []
+    except Exception:
+        libraries = []
+
+    genres, franchises, persons = get_data_for_media()
 
     #SI on veux la preview d'un média externe ou interne
     if request.method == 'POST':
@@ -99,22 +94,17 @@ def add_media_preview_add():
     if not current_user:
         return redirect('/login')
     
-    # Récupérer les genres, franchises et personnes pour le template en cas d'erreur
-    genres = []
-    franchises = []
-    persons = []
-    libraries = []
-    
+    # Récupérer les données nécessaires
     try:
         response = api_get(f'/users/{current_user["id"]}/libraries')
         if response.status_code == 200:
             libraries = response.json() or []
+        else:
+            libraries = []
+    except Exception:
+        libraries = []
 
-        genres, _ = api_search('genres', '', 1, 100)
-        franchises, _ = api_search('franchises', '', 1, 100)
-        persons, _ = api_search('persons', '', 1, 100)
-    except:
-        pass
+    genres, franchises, persons = get_data_for_media()
 
 
     title = request.form.get('title') or None
