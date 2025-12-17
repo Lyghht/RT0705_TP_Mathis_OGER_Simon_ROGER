@@ -188,11 +188,11 @@
                                             </div>
                                             <div class="col-md-3 mb-2">
                                                 <label class="form-label small">Rôle</label>
-                                                <input type="text" class="form-control person-role" name="person_{{ i }}_role" value="{% if person_data and person_data.role %}{{ person_data.role }}{% endif %}">
+                                                <input type="text" class="form-control person-role" name="person_{{ i }}_role" value="{% if person_data and person_data.role %}{{ person_data.role }}{% endif %}" placeholder="Rôle...">
                                             </div>
                                             <div class="col-md-3 mb-2">
                                                 <label class="form-label small">Personnage</label>
-                                                <input type="text" class="form-control person-character" name="person_{{ i }}_character"value="{% if person_data and person_data.character_name %}{{ person_data.character_name }}{% endif %}">
+                                                <input type="text" class="form-control person-character" name="person_{{ i }}_character"value="{% if person_data and person_data.character_name %}{{ person_data.character_name }}{% endif %}" placeholder="Personnage joué...">
                                             </div>
                                             <div class="col-md-1 d-flex align-items-end mb-2">
                                                 <button type="button" class="btn btn-danger btn-sm remove-person" onclick="removePersonRow(this)">X</button>
@@ -234,6 +234,7 @@
         const trailerUrlInput = document.getElementById('trailer_url');
         const trailerUrlFeedback = document.getElementById('trailer_url_feedback');
         
+        //on fait la vérif avec un blur pour le lien youtube
         trailerUrlInput.addEventListener('blur', function() {
             const isValid = !this.value.trim() || isValidYouTubeUrl(this.value.trim());
             trailerUrlFeedback.style.display = isValid ? 'none' : 'block';
@@ -267,18 +268,11 @@
                     </div>
                     <div class="col-md-3 mb-2">
                         <label class="form-label small">Rôle</label>
-                        <select class="form-select person-role" name="person_${personCounter}_role">
-                            <option value="acteur">Acteur</option>
-                            <option value="réalisateur">Réalisateur</option>
-                            <option value="auteur">Auteur</option>
-                            <option value="compositeur">Compositeur</option>
-                            <option value="producteur">Producteur</option>
-                            <option value="autre">Autre</option>
-                        </select>
+                        <input type="text" class="form-control person-role" name="person_{{ i }}_role" value="{% if person_data and person_data.role %}{{ person_data.role }}{% endif %} placeholder="Rôle...">
                     </div>
                     <div class="col-md-3 mb-2">
                         <label class="form-label small">Personnage</label>
-                        <input type="text" class="form-control person-character" name="person_${personCounter}_character">
+                        <input type="text" class="form-control person-character" name="person_${personCounter}_character" placeholder="Personnage joué...">
                     </div>
                     <div class="col-md-1 d-flex align-items-end mb-2">
                         <button type="button" class="btn btn-danger btn-sm remove-person" onclick="removePersonRow(this)">X</button>

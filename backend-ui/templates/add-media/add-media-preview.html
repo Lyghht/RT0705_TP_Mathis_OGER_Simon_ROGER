@@ -170,11 +170,7 @@
                         </div>
                         <div class="card-body">
                             <div id="persons_container">
-                                {% if data and data.persons %}
-                                    {% set persons_count = data.persons|length if data.persons else 1 %}
-                                {% else %}
-                                    {% set persons_count = 1 %}
-                                {% endif %}
+                                {% set persons_count = data.persons|length if (data and data.persons) else 1 %}
                                 {% for i in range(1, persons_count + 1) %}
                                     {% set person_data = None %}
                                     {% if data and data.persons %}
@@ -266,6 +262,7 @@
         const trailerUrlInput = document.getElementById('trailer_url');
         const trailerUrlFeedback = document.getElementById('trailer_url_feedback');
         
+        //Validation URL quand on tape avec un blur
         trailerUrlInput.addEventListener('blur', function() {
             const isValid = !this.value.trim() || isValidYouTubeUrl(this.value.trim());
             trailerUrlFeedback.style.display = isValid ? 'none' : 'block';
@@ -315,10 +312,6 @@
         updateFranchiseOrderState(); // on met à jour direct quand la page charge
         
         // Gestion des personnes (ajout/suppression dynamique)
-        {% set persons_count = 1 %}
-        {% if data and data.persons and data.persons|length > 0 %}
-            {% set persons_count = data.persons|length %}
-        {% endif %}
         const personsData = {{ persons | tojson }};
         let personCounter = {{ persons_count }};
         
