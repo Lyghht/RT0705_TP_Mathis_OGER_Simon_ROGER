@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request
-from utils.utils_api import api_get, api_search
-from utils.utils import get_generic_view
+from utils.utils_api import api_get
+from utils.utils import get_generic_view, get_int_or_default
 
 franchises_bp = Blueprint('franchises', __name__)
 
@@ -18,10 +18,7 @@ def franchise_media(franchise_id):
     pagination = {}
     messages = None
 
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
 
     try:
         response = api_get(f'/franchises/{franchise_id}')

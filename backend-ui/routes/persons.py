@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from utils.utils_api import api_get, api_search
+from utils.utils_api import api_get
 from utils.utils import get_generic_view
 
 persons_bp = Blueprint('persons', __name__)

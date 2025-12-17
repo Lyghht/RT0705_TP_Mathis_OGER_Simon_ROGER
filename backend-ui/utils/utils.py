@@ -7,6 +7,7 @@ from utils.utils_api import api_search
 
 API_BASE_URL = 'http://nginx/api'
 
+#Donne l'utilisateur actuel
 def get_current_user():
     if 'auth_token' not in session:
         return None
@@ -19,12 +20,14 @@ def get_current_user():
         return None
     return None
 
+#Donne si il est admin ou trusted
 def is_admin():
     user = get_current_user()
     if not user:
         return False
     return user.get('role') in ['admin', 'trusted']
 
+#Dit si il est vraiment admin (pas trusted)
 def is_real_admin():
     """Vérifie si l'utilisateur est vraiment admin (pas trusted)"""
     user = get_current_user()
@@ -50,8 +53,8 @@ def get_generic_view(request, base, per_page):
     
     return items, pagination, search_query, page, messages
 
+#Gestion téléchargement de l'image sinon retourne None
 def upload_cover_image(file, url=False):
-    """Upload une image de couverture et retourne l'URL ou None en cas d'erreur."""
     try:
 
         if url:
@@ -79,6 +82,7 @@ def upload_cover_image(file, url=False):
     except:
         return None
 
+#Gestion de la récupération des informations des personnes à partir d'une request de liste de personne qui se nomme person_
 def get_persons_post_data(request_form):
     persons_list = []
 
@@ -102,7 +106,7 @@ def get_persons_post_data(request_form):
                 continue 
     return persons_list
 
-
+#Modifie le lien pour le mettre en forme pour l'embed dans la visualisation d'un média
 def get_url_embed_youtube(url):
     youtube_pattern = re.compile(r'^https://(www\.)?youtube\.com/.*', re.IGNORECASE)
     if not youtube_pattern.match(url):
@@ -136,3 +140,10 @@ def get_data_for_media():
         persons = []
 
     return genres, franchises, persons
+
+#convertit la valeur ou return le paramètre default
+def get_int_or_default(value, default=None):
+    try:
+        return int(value)
+    except:
+        return default

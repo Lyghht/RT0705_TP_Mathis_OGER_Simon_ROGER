@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect
-from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data, get_data_for_media
+from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data, get_data_for_media, get_int_or_default
 from utils.utils_api import api_get, api_post, api_search
 from utils.tmdb_api import api_tmdb_search_film, api_tmdb_get_film, api_tmdb_search_series, api_tmdb_get_series
 
@@ -16,10 +16,7 @@ def add_media():
     table_type = request.args.get('table', '')
     search_results = []
     pagination = {}
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
 
     try:
         if search_query and (table_type in ["externe_film", "externe_series", "interne"]):
@@ -65,10 +62,7 @@ def add_media_preview():
     #SI on veux la preview d'un média externe ou interne
     if request.method == 'POST':
         base = request.form.get('base') or None
-        try:
-            media_id = int(request.form.get('media_id'))
-        except:
-            media_id = None
+        media_id = get_int_or_default(request.form.get('media_id'))
 
         if base == 'externe_film':
             response = api_tmdb_get_film(media_id)
@@ -82,7 +76,10 @@ def add_media_preview():
             response = api_get(f'/media/{media_id}')
             if response.status_code == 200:
                 data = response.json()
-                data['genres'] = [int(g['id']) for g in data['genres']]
+                try:
+                    data['genres'] = [int(g['id']) for g in data['genres']]
+                except:
+                    data['genres'] = []
                 
     
     return render_template('add-media/add-media-preview.html', libraries=libraries, data=data, genres=genres, franchises=franchises, persons=persons)
@@ -109,32 +106,15 @@ def add_media_preview_add():
 
     title = request.form.get('title') or None
     media_type = request.form.get('type') or None
-    try:
-        library_id = int(request.form.get('library')) or None
-    except:
-        library_id = None
+    library_id = get_int_or_default(request.form.get('library'))
     visibility = request.form.get('visibility') or None
-    try:
-        release_year = int(request.form.get('year')) or None
-    except:
-        release_year = None
+    release_year = get_int_or_default(request.form.get('year'))
     synopsis = request.form.get('synopsis') or None
     trailer_url = request.form.get('trailer_url') or None
-    try:
-        franchise_id = int(request.form.get('franchise')) or None
-    except:
-        franchise_id = None
-
-    try:
-        franchise_order = int(request.form.get('franchise_order')) or None
-    except:
-        franchise_order = None
-
+    franchise_id = get_int_or_default(request.form.get('franchise'))
+    franchise_order = get_int_or_default(request.form.get('franchise_order'))
     genres_selected = request.form.getlist('genres') or []
-    try:
-        duration = int(request.form.get('duration')) or None
-    except:
-        duration = None
+    duration = get_int_or_default(request.form.get('duration'))
 
     #Champ obligatoires
     if not title or not media_type or not library_id or not visibility:
@@ -174,15 +154,15 @@ def add_media_preview_add():
         data = {
             'title': title,
             'type': media_type,
-            'library_id': int(library_id),
+            'library_id': library_id,
             'visibility': visibility,
-            'release_year': int(release_year) if release_year else None,
-            'duration': int(duration) if duration else None,
+            'release_year': release_year,
+            'duration': duration,
             'synopsis': synopsis,
             'cover_image_url': cover_image_url,
             'trailer_url': trailer_url,
-            'franchise_id': int(franchise_id) if franchise_id else None,
-            'franchise_order': int(franchise_order) if franchise_order else None,
+            'franchise_id': franchise_id,
+            'franchise_order': franchise_order,
             'genres': genre_ids,
             'persons': persons_list
         }

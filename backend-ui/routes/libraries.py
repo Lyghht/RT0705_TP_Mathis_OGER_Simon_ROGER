@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect
-from utils.utils import get_current_user
+from utils.utils import get_current_user, get_int_or_default
 from utils.utils_api import api_get, api_post, api_patch, api_delete, api_search
 
 libraries_bp = Blueprint('libraries', __name__)
@@ -7,10 +7,7 @@ libraries_bp = Blueprint('libraries', __name__)
 #Vue des vidéothèques
 @libraries_bp.route('/libraries', methods=['GET', 'POST'])
 def libraries():
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
 
     try:
         library_items, pagination = api_search('libraries', '', page, 18)
@@ -57,10 +54,7 @@ def libraries():
 
 #Delete d'une librairie
 def delete_media(request):
-    try:
-        media_id = int(request.form.get('media_id'))
-    except:
-        media_id = None
+    media_id = get_int_or_default(request.form.get('media_id'))
             
     if media_id:
         try:    
@@ -124,11 +118,7 @@ def library(library_id):
     except:
         is_owner = False
 
-    
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
 
     if request.method == 'POST':
         if not current_user:

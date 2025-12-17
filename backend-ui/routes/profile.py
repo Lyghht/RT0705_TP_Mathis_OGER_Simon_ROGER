@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, redirect, request, session
-from utils.utils import get_current_user
+from utils.utils import get_current_user, get_int_or_default
 from utils.utils_api import api_get, api_post, api_delete, api_patch
 
 profile_bp = Blueprint('profile', __name__)
@@ -19,10 +19,7 @@ def profile(user_id=None):
     profile_user = None
     libraries = []
     pagination = {}
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
 
     messages = session.pop('messages', None)
 
@@ -86,10 +83,7 @@ def profile_libraries():
     if not current_user:
         return redirect('/login')
     
-    try:
-        library_id = int(request.form.get('library_id'))
-    except:
-        library_id = None
+    library_id = get_int_or_default(request.form.get('library_id'))
 
     name = request.form.get('name', '')
     description = request.form.get('description', '')

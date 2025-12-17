@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, request
-from utils.utils import is_admin, is_real_admin, get_current_user
-from utils.utils_api import api_get, api_post, api_patch, api_delete, api_search
+from utils.utils import is_admin, is_real_admin, get_current_user, get_int_or_default
+from utils.utils_api import api_post, api_patch, api_delete, api_search
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -23,12 +23,8 @@ def admin_persons():
     if not is_admin():
         return redirect('/')
     
+    delete_id = get_int_or_default(request.form.get('delete'))
     messages = None
-    
-    try:
-        delete_id = int(request.form.get('delete'))
-    except:
-        delete_id = None
 
     #Suppression d'une personne
     if request.method == 'POST' and delete_id:
@@ -42,10 +38,7 @@ def admin_persons():
             messages = ['danger', 'Erreur lors de la suppression']
     #Ajout / modification d'une personne
     elif request.method == 'POST' and not delete_id:
-        try:
-            person_id = int(request.form.get('id'))
-        except:
-            person_id = None
+        person_id = get_int_or_default(request.form.get('id'))
 
         name = request.form.get('name', '')
         birthdate = request.form.get('birthdate', '') or None
@@ -71,10 +64,7 @@ def admin_persons():
     
     #Requête normal GET
     search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
     person_items = []
     pagination = {}
     
@@ -92,11 +82,7 @@ def admin_genres():
     if not is_admin():
         return redirect('/')
     
-    try:
-        delete_id = int(request.form.get('delete'))
-    except:
-        delete_id = None
-
+    delete_id = get_int_or_default(request.form.get('delete'))
     messages = None
 
     #Suppression d'un genre
@@ -111,10 +97,7 @@ def admin_genres():
             messages = ['danger', 'Erreur lors de la suppression']
     #Ajout / modification d'un genre
     elif request.method == 'POST' and not delete_id:
-        try:
-            genre_id = int(request.form.get('id'))
-        except:
-            genre_id = None
+        genre_id = get_int_or_default(request.form.get('id'))
         name = request.form.get('name', '')
         
         if not name:
@@ -138,10 +121,7 @@ def admin_genres():
     
     #Requête normal GET
     search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
     genre_items = []
     pagination = {}
     
@@ -159,11 +139,7 @@ def admin_franchises():
     if not is_admin():
         return redirect('/')
     
-    try:
-        delete_id = int(request.form.get('delete'))
-    except:
-        delete_id = None
-
+    delete_id = get_int_or_default(request.form.get('delete'))
     messages = None
 
     #Suppression d'une franchise
@@ -178,10 +154,7 @@ def admin_franchises():
             messages = ['danger', 'Erreur lors de la suppression'] 
     #Ajout / modification d'une franchise
     elif request.method == 'POST' and not delete_id:
-        try:
-            franchise_id = int(request.form.get('id'))
-        except:
-            franchise_id = None
+        franchise_id = get_int_or_default(request.form.get('id'))
         name = request.form.get('name', '')
         description = request.form.get('description', '') or None
         
@@ -206,10 +179,7 @@ def admin_franchises():
     
     #Requête normal GET
     search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
     franchise_items = []
     pagination = {}
     
@@ -227,12 +197,8 @@ def admin_users():
     if not is_real_admin():
         return redirect('/')
     
+    delete_id = get_int_or_default(request.form.get('delete'))
     messages = None
-
-    try:
-        delete_id = int(request.form.get('delete'))
-    except:
-        delete_id = None
 
     #Suppression d'un utilisateur
     if request.method == 'POST' and delete_id:
@@ -245,10 +211,7 @@ def admin_users():
         except Exception as e:
             messages = ['danger', 'Erreur lors de la suppression']
     elif request.method == 'POST' and not delete_id:
-        try:
-            user_id = int(request.form.get('id'))
-        except:
-            user_id = None
+        user_id = get_int_or_default(request.form.get('id'))
 
         username = request.form.get('username', '')
         email = request.form.get('email', '')
@@ -272,10 +235,7 @@ def admin_users():
 
     #Requête normal GET
     search_query = request.args.get('q', '')
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
     user_items = []
     pagination = {}
     

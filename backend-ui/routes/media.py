@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect
-from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data, get_data_for_media
-from utils.utils_api import api_get, api_patch, api_search
+from utils.utils import get_current_user, get_url_embed_youtube, upload_cover_image, get_persons_post_data, get_data_for_media, get_int_or_default
+from utils.utils_api import api_get, api_patch
 
 media_bp = Blueprint('media', __name__)
 
@@ -9,22 +9,9 @@ media_bp = Blueprint('media', __name__)
 def media():
     search_query = request.args.get('q', '')
 
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
-
-    try:
-        franchise_id = int(request.args.get('franchise_id'))
-    except:
-        franchise_id = None
-
-    try:
-        genre_id = int(request.args.get('genre_id'))
-    except:
-        genre_id = None
-
-
+    page = get_int_or_default(request.args.get('page', 1), 1)
+    franchise_id = get_int_or_default(request.args.get('franchise_id'))
+    genre_id = get_int_or_default(request.args.get('genre_id'))
     media_items = []
     pagination = {}
     
@@ -142,25 +129,13 @@ def edit_media_post(media_id):
     title = request.form.get('title') or None
     media_type = request.form.get('type') or None
     visibility = request.form.get('visibility') or None
-    try:
-        release_year = int(request.form.get('year')) or None
-    except:
-        release_year = None
+    release_year = get_int_or_default(request.form.get('year'))
     synopsis = request.form.get('synopsis') or None
     trailer_url = request.form.get('trailer_url') or None
-    try:
-        franchise_id = int(request.form.get('franchise')) or None
-    except:
-        franchise_id = None
-    try:
-        franchise_order = int(request.form.get('franchise_order')) or None
-    except:
-        franchise_order = None
+    franchise_id = get_int_or_default(request.form.get('franchise'))
+    franchise_order = get_int_or_default(request.form.get('franchise_order'))
     genres_selected = request.form.getlist('genres') or []
-    try:
-        duration = int(request.form.get('duration')) or None
-    except:
-        duration = None
+    duration = get_int_or_default(request.form.get('duration'))
 
     # fonction pour construire l'objet si erreur
     def build_media_if_error(cover_img_url=None, genre_ids_list=None):
@@ -194,7 +169,7 @@ def edit_media_post(media_id):
             'synopsis': synopsis,
             'cover_image_url': cover_img_url,
             'trailer_url': trailer_url,
-            'franchise_id': int(franchise_id) if franchise_id else None,
+            'franchise_id': franchise_id,
             'franchise_order': franchise_order,
         }, genre_ids_list, genres, franchises, all_persons, current_persons
 
@@ -238,13 +213,13 @@ def edit_media_post(media_id):
             'title': title,
             'type': media_type,
             'visibility': visibility,
-            'release_year': int(release_year) if release_year else None,
-            'duration': int(duration) if duration else None,
+            'release_year': release_year,
+            'duration': duration,
             'synopsis': synopsis,
             'cover_image_url': cover_image_url,
             'trailer_url': trailer_url,
-            'franchise_id': int(franchise_id) if franchise_id else None,
-            'franchise_order': int(franchise_order) if franchise_order else None,
+            'franchise_id': franchise_id,
+            'franchise_order': franchise_order,
             'genres': genre_ids,
             'persons': persons_list
         }
@@ -257,4 +232,4 @@ def edit_media_post(media_id):
             return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', 'Erreur lors de la modification'])
     except Exception as e:
         media_obj, current_genre_ids, genres, franchises, all_persons, current_persons = build_media_if_error(cover_img_url=cover_image_url)
-        return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', f'Erreur lors de la modification'])
+        return render_template('media/edit-media.html', media=media_obj, genres=genres, franchises=franchises, all_persons=all_persons, current_persons=current_persons, current_genre_ids=current_genre_ids, messages=['danger', f'Erreur lors de la modification : {str(e)}'])

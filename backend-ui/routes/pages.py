@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request
-from utils.utils import get_current_user, get_generic_view
+from utils.utils import get_current_user, get_generic_view, get_int_or_default
 from utils.utils_api import api_get
 
 pages_bp = Blueprint('pages', __name__)
@@ -13,10 +13,7 @@ def home():
     current_user = get_current_user()
     media_random = None
     
-    try:
-        page = int(request.args.get('page', 1))
-    except:
-        page = 1
+    page = get_int_or_default(request.args.get('page', 1), 1)
     
     try:
         # stats du site pour l'affichage de l'acceuil
