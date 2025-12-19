@@ -14,9 +14,11 @@ La banane pixélisée est destinée à être disponible pour plusieurs amis qui 
 
 ### Installation
 
-* Allez dans le dossier souhaité, clonez le projet puis faites :
+* Allez dans le dossier souhaité, clonez le projet.
+* Copiez le .env.example, puis configurez-le ! Un jeu de données est fourni et automatiquement importé dans /data/init.sql.
+* Une fois fait, faites :
 ```bash
-sudo docker compose up -d --build
+docker compose up -d --build
 ```
 * Vous pouvez maintenant aller sur le site soit avec localhost, soit avec l'IP. L'accès se fait avec nginx sur le port externe dans le .env.
 

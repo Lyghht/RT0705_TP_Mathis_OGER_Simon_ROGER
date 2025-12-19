@@ -23,7 +23,6 @@ services:
       - .env
     volumes:
       - ./backend-ui:/app
-      - ./backend-ui/static:/app/static
     networks: #Il peut parler que avec le nginx et l'api
       - net_app
       - app-api
