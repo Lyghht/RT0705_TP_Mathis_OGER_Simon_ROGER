@@ -25,7 +25,7 @@ services:
       - ./backend-ui:/app
     networks: #Il peut parler que avec le nginx et l'api
       - net_app
-      - app-api
+      - app_api
     depends_on:
       backend-api: 
         condition: service_started
@@ -39,7 +39,7 @@ services:
     env_file:
       - .env
     networks: #Il peut allé sur la db et sur l'ui
-      - app-api
+      - app_api
       - api_db
     depends_on:
       postgres-db:
@@ -67,7 +67,7 @@ services:
 #Def des réseaux
 networks:
   net_app:
-  app-api:
+  app_api:
   api_db:     
 
 #Def des volumes
