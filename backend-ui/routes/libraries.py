@@ -161,6 +161,6 @@ def library(library_id):
         elif not library_data:
             return render_template('error.html', error_code=404, error_message="Vidéothèque non trouvée"), 404
     except:
-        return redirect('/libraries')
-    
+        return render_template('error.html', error_code=500, error_message="Erreur au chargement"), 500
+
     return render_template('libraries/library.html', library_data=library_data, media_items=media_items, pagination=pagination, current_page=page, is_owner=is_owner, is_admin=is_admin, messages=messages)
