@@ -23,7 +23,6 @@ services:
       - .env
     volumes:
       - ./backend-ui:/app
-      - ./backend-ui/static:/app/static
     networks: #Il peut parler que avec le nginx et l'api
       - net_app
       - app-api
@@ -43,11 +42,11 @@ services:
       - app-api
       - api_db
     depends_on:
-      postgres_db:
+      postgres-db:
         condition: service_healthy
 
   #Le conteneur pour la db
-  postgres_db:
+  postgres-db:
     image: postgres:15-alpine
     container_name: database
     environment:
