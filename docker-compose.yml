@@ -10,7 +10,7 @@ services:
     volumes:
       - ./nginx/nginx.conf.template:/etc/nginx/templates/default.conf.template
       - ./backend-ui/static:/usr/share/nginx/html/static
-    networks: #Il peut lire uniquement l'ui
+    networks: #Il peut parler uniquement avec l'ui
       - net_app
     depends_on:
       - backend-ui
@@ -38,7 +38,7 @@ services:
       - ./api:/app
     env_file:
       - .env
-    networks: #Il peut allé sur la db et sur l'ui
+    networks: #Il peut parler que avec la db et l'ui
       - app_api
       - api_db
     depends_on:
