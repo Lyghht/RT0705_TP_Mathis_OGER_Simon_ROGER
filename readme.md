@@ -35,7 +35,7 @@ docker exec -it <NOM_CONTENEUR> psql -U <NOM_UTILISATEUR> -d <NOM_BASE>
 
 ## Auteurs
 
-* Mathis OGER  
+* [@MathisWarrior - Mathis OGER](https://github.com/MathisWarrior)  
 * [@Lyghht - Simon ROGER](https://github.com/Lyghht)
 
 ## Licence
